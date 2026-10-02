@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="yueding-api-base" content="">
+  <title>约定 · 读懂约定，再做决定</title>
+  <meta name="description" content="上传合同，提出自己的问题，获得带条款依据的回答和下一步行动建议。">
+  <link rel="stylesheet" href="demo-api.css">
+  <script type="module" src="demo-api.js"></script>
+</head>
+<body>
+  <header class="top"><div class="shell bar"><a class="brand" href="./"><span class="brand-mark">约</span>约定<span class="wordmark">YUEDING</span></a><span class="header-note">每一份承诺，都值得说清楚。</span><span class="tag">现场体验</span></div></header>
+  <main class="shell">
+    <div class="hero"><div><div class="eyebrow">从你的文件与问题开始</div><h1>这份约定，<span>与你有什么关系？</span></h1><p>上传原文，告诉我们你关心什么。让依据、疑问和下一步行动一起清楚起来。</p></div><div class="hero-note"><b>原文有出处</b><b>缺口有提示</b><b>行动有选择</b></div></div>
+    <nav class="scenarios" aria-label="选择场景">
+      <button type="button" class="scenario selected" data-scene="rental" aria-pressed="true"><span>01</span><div><strong>租房合同</strong><small>打孔、退租与押金</small></div></button>
+      <button type="button" class="scenario" data-scene="employment" aria-pressed="false"><span>02</span><div><strong>入职文件</strong><small>薪酬、激励与承诺</small></div></button>
+      <button type="button" class="scenario" data-scene="privacy" aria-pressed="false"><span>03</span><div><strong>应用协议</strong><small>权限、用途与选择</small></div></button>
+    </nav>
+    <div class="workspace">
+      <section class="panel input-panel" aria-labelledby="input-title"><div class="panel-title"><h2 id="input-title">你的材料与问题</h2><span>01 / 输入</span></div>
+        <form id="analysis-form">
+          <label class="field-label" for="document-file">上传一份文件</label>
+          <label class="dropzone" id="dropzone" for="document-file"><span class="upload-icon" aria-hidden="true">↑</span><strong id="file-label">点击选择，或拖入文件</strong><span id="file-detail">PDF、DOCX、TXT、Markdown · 最大 15 MB</span><input id="document-file" name="file" type="file" accept=".pdf,.docx,.txt,.md" aria-label="选择合同或协议文件"></label>
+          <div class="file-actions" id="file-actions" hidden><button type="button" id="preview-file">查看原文</button><button type="button" id="remove-file">移除文件</button><span>点击“开始核对”后上传</span></div>
+          <label class="field-label" for="question">你想问什么？<span id="question-count">0 / 256</span></label>
+          <textarea id="question" name="question" maxlength="256" required rows="4" placeholder="例如：我想在墙上打两个孔装书架，需要先取得同意吗？"></textarea>
+          <div class="suggestions" id="suggestions" aria-label="问题示例"></div>
+          <details class="context"><summary>补充背景，让回答更贴近你的处境 <span>选填</span></summary><label for="context" id="context-label">房东已有回复</label><textarea id="context" maxlength="2000" rows="3" placeholder="可以补充对方的说法、已经发生的情况或你的目标。"></textarea></details>
+          <div id="priority-field" hidden><label class="field-label" for="priority">你更重视什么？</label><select id="priority"><option>两者平衡</option><option>更高的固定薪酬</option><option>更明确的长期激励</option></select></div>
+          <div id="access-field" hidden><label class="field-label" for="access-code">演示访问码</label><input id="access-code" type="password" autocomplete="off" placeholder="填写演示负责人提供的访问码"></div>
+          <div class="form-actions"><button class="primary" id="submit" type="submit" disabled>开始核对 <span aria-hidden="true">→</span></button><button class="stop" id="stop" type="button" hidden>停止</button></div>
+          <p class="service-note" id="service-note" role="status">正在连接分析服务…</p>
+          <p class="privacy-note">提交后，文件与问题将发送至约定服务端及 Dify 进行分析。回答以原文为依据，未写明的条件会列为待确认。</p>
+        </form>
+      </section>
+      <section class="panel output-panel" aria-labelledby="output-title"><div class="panel-title"><h2 id="output-title">依据与行动</h2><span>02 / 结果</span></div>
+        <div class="output-tools"><span id="result-caption">等待你的问题</span><div><button type="button" id="copy" disabled>复制</button><button type="button" id="download" disabled>下载</button></div></div>
+        <div id="progress" hidden aria-live="polite"><div class="progress-title"><strong id="progress-text">准备分析…</strong><span id="elapsed">0 秒</span></div><ol class="progress-steps"><li data-stage="upload">上传文件</li><li data-stage="extract">读取条款</li><li data-stage="analyze">分析问题</li><li data-stage="review">核对依据</li></ol><p>长文档可能需要一两分钟。结果会在复核完成后显示。</p></div>
+        <div id="error" class="error" role="alert" hidden></div>
+        <div id="empty" class="empty"><div class="empty-document" aria-hidden="true"><span></span><span></span><span></span><i>✓</i></div><h3>从一个具体问题开始</h3><p>我们会把回答中的依据指向原文，<br>列出仍需确认的条件，并给出可采取的行动。</p><div class="empty-tags"><span>条款依据</span><span>待确认事项</span><span>沟通建议</span></div></div>
+        <article id="answer" class="answer" aria-label="分析结果" hidden></article>
+      </section>
+    </div>
+    <footer><span>约定 · 签字之前，把话说清楚。</span><span>每次提问独立核对所选文件；请结合实际情况确认建议。</span></footer>
+  </main>
+  <dialog id="preview"><div class="preview-bar"><strong id="preview-title">文件预览</strong><button type="button" id="close-preview" aria-label="关闭预览">关闭 ×</button></div><div id="preview-body"></div></dialog>
+</body>
+</html>

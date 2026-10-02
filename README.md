@@ -8,6 +8,12 @@
 
 ## 独立演示页
 
+### API 自有界面
+
+[`demo-api.html`](demo-api.html) 与 `server/index.mjs` 提供统一的约定界面和服务端 Dify API 接入，包含上传、问题框、实际运行进度、结果复制与下载。使用 Node.js 22+ 运行 `npm start`；部署与密钥配置见 [API Demo 说明](docs/API_DEMO.md)。也提供 Docker 部署文件。真实 API 运行需要先在服务端配置对应工作流应用 Key。
+
+### 已发布的嵌入版
+
 [`demo.html`](demo.html) 在页面内嵌入三个已发布的 Dify 工作流：选择场景，在嵌入表单中上传文件、填写目标或问题，运行后在同一页面查看结果。下方另有虚构材料和预设行动卡，用于讲解输出结构。演示页为独立 HTML 文件，已单独同步至 GitHub Pages 的 `main` 分支，可从 <https://alghaporthos.github.io/yueding/demo.html> 访问。嵌入式实时运行需要联网；上传的文件由 Dify Cloud 处理。
 
 ## 快速开始
