@@ -8,7 +8,7 @@
 
 ## 独立演示页
 
-[`demo.html`](demo.html) 集中展示租房、入职和应用权限三个虚构场景，包含原文节选、行动卡及各自的 agentic workflow。每个场景都可跳转至已发布的 Dify 工作流实际运行。演示页为独立 HTML 文件，可直接在浏览器打开；页面中的示例内容不调用模型，也不会上传材料。演示页也已单独同步至 GitHub Pages 的 `main` 分支，可从 <https://alghaporthos.github.io/yueding/demo.html> 访问。
+[`demo.html`](demo.html) 在页面内嵌入三个已发布的 Dify 工作流：选择场景，在嵌入表单中上传文件、填写目标或问题，运行后在同一页面查看结果。下方另有虚构材料和预设行动卡，用于讲解输出结构。演示页为独立 HTML 文件，已单独同步至 GitHub Pages 的 `main` 分支，可从 <https://alghaporthos.github.io/yueding/demo.html> 访问。嵌入式实时运行需要联网；上传的文件由 Dify Cloud 处理。
 
 ## 快速开始
 
