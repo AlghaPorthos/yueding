@@ -1,0 +1,82 @@
+version: "0.2"
+name: hackathon-dev
+summary: >
+  Full-backend development rig for the contract reader. Codex owns orchestration,
+  implementation and verification; Claude provides fast and deep independent review.
+
+culture_file: OPENRIG-CULTURE.md
+
+pods:
+  - id: orchestration
+    label: Orchestration
+    members:
+      - id: lead
+        agent_ref: "local:../../../../../opt/homebrew/lib/node_modules/@openrig/cli/daemon/specs/agents/orchestration/orchestrator"
+        runtime: codex
+        model: gpt-6-astra
+        profile: default
+        cwd: "."
+    edges: []
+
+  - id: development
+    label: Development
+    members:
+      - id: implementer
+        agent_ref: "local:../../../../../opt/homebrew/lib/node_modules/@openrig/cli/daemon/specs/agents/development/implementer"
+        runtime: codex
+        model: gpt-6-sol
+        profile: default
+        cwd: "."
+      - id: verifier
+        agent_ref: "local:../../../../../opt/homebrew/lib/node_modules/@openrig/cli/daemon/specs/agents/development/qa"
+        runtime: codex
+        model: gpt-6-sol
+        profile: default
+        cwd: "."
+    edges:
+      - kind: delegates_to
+        from: implementer
+        to: verifier
+
+  - id: review
+    label: Independent Review
+    members:
+      - id: reviewer
+        agent_ref: "local:../../../../../opt/homebrew/lib/node_modules/@openrig/cli/daemon/specs/agents/review/independent-reviewer"
+        runtime: claude-code
+        model: glm-5.3
+        profile: default
+        cwd: "."
+      - id: fast-reviewer
+        agent_ref: "local:../../../../../opt/homebrew/lib/node_modules/@openrig/cli/daemon/specs/agents/review/independent-reviewer"
+        runtime: claude-code
+        model: glm-5.3-flash
+        profile: default
+        cwd: "."
+    edges: []
+
+edges:
+  - kind: delegates_to
+    from: orchestration.lead
+    to: development.implementer
+  - kind: delegates_to
+    from: orchestration.lead
+    to: development.verifier
+  - kind: delegates_to
+    from: orchestration.lead
+    to: review.reviewer
+  - kind: delegates_to
+    from: orchestration.lead
+    to: review.fast-reviewer
+  - kind: can_observe
+    from: review.reviewer
+    to: development.implementer
+  - kind: can_observe
+    from: review.reviewer
+    to: development.verifier
+  - kind: can_observe
+    from: review.fast-reviewer
+    to: development.implementer
+  - kind: can_observe
+    from: review.fast-reviewer
+    to: development.verifier
