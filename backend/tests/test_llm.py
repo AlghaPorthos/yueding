@@ -96,8 +96,9 @@ class LLMApiTests(unittest.TestCase):
         uploaded = request(app, "POST", "/v1/contracts", headers=headers, body=body, content_type=content_type)["body"]
         path = f"/v1/contracts/{uploaded['contract_id']}/versions/{uploaded['version_id']}/generate"
         result = request(app, "POST", path, headers=headers)
-        self.assertEqual(result["body"]["generation_status"], "failed")
-        self.assertEqual(result["body"]["error"]["code"], "invalid_output")
+        # 越界引用被剔除而不是整体拒绝：摘要与合法引用仍然可用
+        self.assertEqual(result["body"]["generation_status"], "succeeded")
+        self.assertEqual(result["body"]["llm"]["result"]["citations"], [])
         self.assertTrue(result["body"]["deterministic"]["findings"])
 
     def test_unconfigured_provider_is_explicit_and_readiness_exposes_configuration(self) -> None:
@@ -140,7 +141,7 @@ class LLMApiTests(unittest.TestCase):
                     os.environ.pop(key, None)
                 else:
                     os.environ[key] = value
-        self.assertEqual(described["providers"], [{"name": "primary", "model": "glm-4.7"}])
+        self.assertEqual(described["providers"], [{"name": "primary", "model": "glm-5.3-flash"}])
         self.assertTrue(described["configured"])
 
 

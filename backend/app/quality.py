@@ -3,6 +3,24 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 
+OCR_LOW_CONFIDENCE_THRESHOLD = 0.55
+MIN_IMAGE_DIMENSION = 600
+
+
+def ocr_quality_reasons(
+    page_confidences: Iterable[float],
+    image_size: tuple[int, int] | None = None,
+) -> list[str]:
+    """Flag OCR quality problems from helper-reported confidence and pixel size."""
+    confidences = list(page_confidences)
+    reasons: list[str] = []
+    if image_size and (image_size[0] < MIN_IMAGE_DIMENSION or image_size[1] < MIN_IMAGE_DIMENSION):
+        reasons.append("low_resolution_image")
+    if confidences and sum(confidences) / len(confidences) < OCR_LOW_CONFIDENCE_THRESHOLD:
+        reasons.append("low_ocr_confidence")
+    return reasons
+
+
 def assess_pages(pages: Iterable[str], *, source_type: str, ocr_engine: str | None = None) -> dict[str, object]:
     """Return deterministic ingestion quality metadata without guessing OCR text."""
     values = [page or "" for page in pages]

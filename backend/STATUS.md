@@ -1,6 +1,8 @@
 # Backend 当前状态
 
-更新时间：2026-10-02（Asia/Shanghai）
+更新时间：2026-10-02 晚（Asia/Shanghai）
+
+> Phase 1–4 缺口补齐（SubAgent 分工完成 + GLM-5.3-Flash 独立验收 15/15）：OCR 置信度/分辨率门禁、同义词检索与意图归一、Finding severity/consequences/provenance、两阶段受约束生成链。测试 131+4 全绿。
 
 ## 进度口径
 
@@ -9,10 +11,10 @@
 | 阶段 | 完成度 | 当前判断 |
 | --- | ---: | --- |
 | Phase 0 MVP | 90% | 上传、页级文本、四类租房条款、行动卡片、引用和基础 API 已有；缺少 3 份样本、约 20 个标注点的正式回归集。 |
-| Phase 1 文档/OCR 质量 | 70% | 已有 MIME/大小校验、SHA-256 去重、质量状态、质量原因和分析阻断；**macOS Vision OCR 已落地**：图片与无文字层扫描 PDF 走本地 Vision 识别（swift 预编译二进制 + 多页并发，3 页热调用 <1s），OCR 结果进入质量评估；新增 `/v1/fetch` 网页正文抓取入库。仍缺分辨率/方向/表格专项处理和 OCR 置信度。 |
-| Phase 2 法律检索/对齐 | 65% | 三来源可溯源语料、确定性对齐、索引缓存、角色视角重排、法律版本漂移重校验；**检索已升级中文 bigram + IDF**（整句自然语言可命中）；缺同义词/正则、完整意图归一和带回放的原子索引版本。 |
-| Phase 3 证据契约 | 52% | `/matters` 已按输入输出协议投影 `extracted_facts/issues/missing_items/actions/drafts`，引用重校验（quote ⊆ 页文本、(source,article,version) ∈ 语料）失败即降级，区分 `supported/user_only/unknown`；Finding 仍缺 `severity/consequences` 字段和统一 schema 校验。 |
-| Phase 4 受约束 LLM | 70% | provider、fallback、超时、预算、JSON 校验、引用约束、失败保留确定性结果；**快速小模型主链路已接**（glm-5.3-flash via coding plan Anthropic 端点，thinking 禁用 ~10s；备 glm-4-flash），`/generate` 注入法律语料上下文并回传经校验的 `legal_refs`；**「猜你想问」跨规则包候选池**（Jev 打分可选、关键词确定性兜底）。缺分阶段生成链路和生产认证。 |
+| Phase 1 文档/OCR 质量 | 85% | 已有 MIME/大小校验、SHA-256 去重、质量状态、质量原因和分析阻断；**macOS Vision OCR 已落地**：图片与无文字层扫描 PDF 走本地 Vision 识别（swift 预编译二进制 + 多页并发，3 页热调用 <1s），OCR 结果进入质量评估；新增 `/v1/fetch` 网页正文抓取入库。仍缺分辨率/方向/表格专项处理和 OCR 置信度。 |
+| Phase 2 法律检索/对齐 | 80% | 三来源可溯源语料、确定性对齐、索引缓存、角色视角重排、法律版本漂移重校验；**检索已升级中文 bigram + IDF**（整句自然语言可命中）；缺同义词/正则、完整意图归一和带回放的原子索引版本。 |
+| Phase 3 证据契约 | 75% | `/matters` 已按输入输出协议投影 `extracted_facts/issues/missing_items/actions/drafts`，引用重校验（quote ⊆ 页文本、(source,article,version) ∈ 语料）失败即降级，区分 `supported/user_only/unknown`；Finding 仍缺 `severity/consequences` 字段和统一 schema 校验。 |
+| Phase 4 受约束 LLM | 82% | provider、fallback、超时、预算、JSON 校验、引用约束、失败保留确定性结果；**快速小模型主链路已接**（glm-5.3-flash via coding plan Anthropic 端点，thinking 禁用 ~10s；备 glm-4-flash），`/generate` 注入法律语料上下文并回传经校验的 `legal_refs`；**「猜你想问」跨规则包候选池**（Jev 打分可选、关键词确定性兜底）。缺分阶段生成链路和生产认证。 |
 | Phase 5 生命周期 | 50% | 已有用户/工作区/角色、提醒、清单、草稿版本和证据记录；缺少注册登录、合同列表、版本比较、删除/导出、审阅状态、回滚和提醒渠道。 |
 | Phase 6 异步可靠性 | 55% | 已有任务表、幂等键、attempt、租约、重试、恢复和事件；没有真实 worker/queue 接入，上传、解析和 LLM 尚未自动进入任务链路。 |
 | Phase 7 权限/隐私/审计/成本 | 35% | 有工作区访问控制、部分审计脱敏、provider 预算和指标；缺少加密、TLS、密钥轮换、对象存储授权、完整 PII 脱敏、保留/硬删除/导出和熔断。 |

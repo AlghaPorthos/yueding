@@ -315,6 +315,34 @@ class LLMRouter:
         raise ProviderFailure("not_configured")
 
 
+def validate_staged_drafts(content: str) -> dict[str, Any]:
+    """Validate the Stage B (actions & drafts) schema of the staged generation chain."""
+    try:
+        value = json.loads(content)
+    except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise ValueError("stage B output is not JSON") from exc
+    if not isinstance(value, dict):
+        raise ValueError("stage B output must be an object")
+    actions = value.get("actions", [])
+    if (
+        not isinstance(actions, list)
+        or len(actions) > 20
+        or any(not isinstance(item, str) or not item.strip() or len(item) > 1000 for item in actions)
+    ):
+        raise ValueError("stage B actions are invalid")
+    drafts = value.get("drafts")
+    if not isinstance(drafts, dict):
+        raise ValueError("stage B drafts are invalid")
+    message = drafts.get("message")
+    supplement = drafts.get("supplement")
+    for text in (message, supplement):
+        if not isinstance(text, str) or not text.strip() or len(text) > 4000:
+            raise ValueError("stage B drafts are invalid")
+    value["actions"] = actions
+    value["drafts"] = {"message": message, "supplement": supplement}
+    return value
+
+
 def validate_generated_json(content: str, allowed_citations: list[dict[str, Any]], allowed_provisions: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Validate the public generation schema, citation references, and legal refs."""
     try:

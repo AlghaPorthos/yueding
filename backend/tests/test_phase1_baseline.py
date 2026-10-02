@@ -52,7 +52,7 @@ class Phase1BaselineTests(unittest.TestCase):
             result = LegalIndex.from_jsonl(path).search("租赁物安全")
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["article"], "第十条")
-        self.assertEqual(result[0]["reasoning"]["retrieval"], "phrase")
+        self.assertEqual(result[0]["reasoning"]["retrieval"], "bigram-idf")
 
     def test_api_without_corpus_does_not_fabricate_law(self):
         with tempfile.TemporaryDirectory() as directory:

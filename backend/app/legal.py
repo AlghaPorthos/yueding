@@ -11,6 +11,24 @@ from datetime import date
 _CJK_RUN = re.compile(r"[\u4e00-\u9fff]+")
 _WORD = re.compile(r"[a-z0-9]+")
 
+# 口语→正式术语的同义词层：键是查询 token（bigram/单字），值是被映射的
+# 正式表述。search() 只增不删原 token，扩展出来的 token 仍走原有命中
+# 门槛（≥2 bigram 或完整查询词），所以「改变房屋」这类跨界 bigram 的
+# 精确性不受影响。
+SYNONYMS: dict[str, tuple[str, ...]] = {
+    "房东": ("出租人",),
+    "租客": ("承租人",),
+    "住户": ("承租人",),
+    "扣钱": ("押金", "扣减"),
+    "扣押": ("押金", "扣减"),
+    "搬走": ("退租",),
+    "不租": ("退租",),
+    "房子": ("房屋",),
+    "修": ("维修",),
+    "修房": ("维修",),
+    "订金": ("押金",),
+}
+
 
 def _tokenize(text: str) -> list[str]:
     """中文拆成重叠 bigram、英文数字按词切：比整句短语匹配的召回高一个量级。"""
@@ -62,6 +80,13 @@ class LegalIndex:
         self.provisions = list(provisions or [])
         self._doc_tokens: list[set[str]] | None = None
         self._df: dict[str, int] = {}
+        # 索引版本戳：对 (source,article,version,quote) 排序后整体 sha256 前 12 位，
+        # 构建时算好缓存；同一份语料重复加载必然得到同一个版本。
+        canonical = "\n".join(sorted(
+            "|".join((provision.source, provision.article, provision.version, provision.quote))
+            for provision in self.provisions
+        ))
+        self.content_version = hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:12]
 
     def _build(self) -> None:
         if self._doc_tokens is not None:
@@ -108,7 +133,20 @@ class LegalIndex:
         if not normalized:
             return []
         self._build()
-        tokens = list(dict.fromkeys(_tokenize(normalized)))
+        runs = {run for run in _CJK_RUN.findall(normalized.casefold()) if run}
+        native_tokens = list(dict.fromkeys(_tokenize(normalized)))
+        # 同义词扩展：命中口语 token 时补上正式术语的 token，原生 token 一个不删。
+        native_set = set(native_tokens)
+        expanded_terms: list[str] = []
+        expanded_tokens: list[str] = []
+        for token in native_tokens:
+            for target in SYNONYMS.get(token, ()):
+                fresh = [item for item in _tokenize(target) if item not in native_set]
+                if fresh:
+                    expanded_tokens.extend(fresh)
+                    if target not in expanded_terms:
+                        expanded_terms.append(target)
+        tokens = list(dict.fromkeys(native_tokens + expanded_tokens))
         total = len(self.provisions) or 1
         scored: list[tuple[float, LegalProvision, list[str]]] = []
         for index, provision in enumerate(self.provisions):
@@ -121,6 +159,12 @@ class LegalIndex:
             doc_tokens = self._doc_tokens[index]
             matched = [token for token in tokens if token in doc_tokens]
             if not matched:
+                continue
+            # 命中门槛：≥2 个 bigram 命中，或至少一个完整查询词命中。
+            # 单个跨界 bigram（如查询“改变房屋”碰上条文里的“房屋”）不算命中；
+            # 扩展出来的 token 也按同一门槛参与，不单独放宽。
+            # 常见词对的噪声由 IDF 排序压低，不在这里硬过滤领域高频词。
+            if len(matched) < 2 and not any(token in runs for token in matched):
                 continue
             # 稀有 bigram 权重高：押金这类特征词远比“什么/时候”这类常见字对得分贡献大
             score = sum(math.log((total + 1) / (self._df.get(token, 0) + 1)) + 1 for token in matched)
@@ -143,5 +187,10 @@ class LegalIndex:
             "content_hash": provision.content_hash, "matched_terms": matched[:12],
             "provision_id": provision.provision_id,
             "source_kind": provision.source_kind,
-            "reasoning": {"retrieval": "bigram-idf", "matched_terms": matched[:12]},
+            "reasoning": {
+                "retrieval": "bigram-idf",
+                "matched_terms": matched[:12],
+                "expanded_terms": expanded_terms,
+                "index_version": self.content_version,
+            },
         } for _, provision, matched in scored[: max(0, limit)]]
