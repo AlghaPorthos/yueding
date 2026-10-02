@@ -2,7 +2,7 @@
 
 > 读懂约定，再做决定。上传合同或协议，找到与你有关的答案。
 
-「约定」是一个**纯静态、可离线**的合同阅读交互原型：导入材料 → 阅读与提问 → 确认与协商，三步完成一次合同阅读。内置租房合同、隐私协议、劳动合同三个虚构示例。
+「约定」是一个**本地优先、可离线**的合同阅读交互原型：导入材料 → 阅读与提问 → 确认与协商，三步完成一次合同阅读。内置租房合同、隐私协议、劳动合同三个虚构示例。
 
 **在线体验（GitHub Pages）**：<https://alghaporthos.github.io/yueding/>
 
@@ -14,7 +14,7 @@
 ```
 index.html   网站入口
 style.css    页面样式
-app.js       交互逻辑 + Multi-Agent 接入层（AgentBridge）
+app.js       交互逻辑 + Hackathon 后端适配层 + Multi-Agent 接入层
 使用说明.txt 离线分享版说明
 docs/        接入文档
 examples/    智能体端点示例服务端
@@ -22,9 +22,30 @@ examples/    智能体端点示例服务端
 
 ## 功能范围
 
-- 示例合同的解读为预设内容；粘贴文本按关键词辅助定位。
-- PDF / 截图支持本地选择与预览，文本提取（OCR）为预留能力，见接入文档。
-- 合同与阅读记录只在当前页面会话中保留，刷新后清空；**默认不向任何服务发送数据**。
+- 示例合同的解读为预设内容；未配置后端时，粘贴文本按关键词辅助定位。
+- 未配置后端时，PDF / 截图只做本地选择与预览；配置后端后，可检索 PDF 由后端提取文字，图片会返回待人工复核状态。
+- 合同与阅读记录只在当前页面会话中保留，刷新后清空；**未配置后端或智能体时不向任何服务发送数据**。
+
+## Hackathon 后端对接
+
+`index.html` 会在本地静态服务器（`localhost` / `127.0.0.1`）上自动把 `baseUrl` 指向
+`http://127.0.0.1:8000`。也可以在引入 `app.js` 前覆盖配置：
+
+```html
+<script>
+  window.YUEDING_BACKEND_CONFIG = {
+    baseUrl: 'https://api.example.com',
+    headers: { 'X-User-ID': '…', 'X-Workspace-ID': '…' },
+    timeout: 60000
+  };
+</script>
+```
+
+前端使用后端已有接口：文本/PDF/图片上传到 `POST /v1/contracts`，随后调用
+`POST /contracts/{contract_id}/versions/{version_id}/analyze`；工坊生成方案调用
+`POST /v1/contracts/{contract_id}/versions/{version_id}/generate`。后端返回的页级文本、引用和四类 finding 会适配到现有阅读界面。后端不可用、文档需要复核或模型未配置时，前端继续显示本地关键词定位和沟通模板。
+
+当前后端的 `generate` 返回的是受证据约束的解释结果（`summary/actions/consequences`），不是三段完整草稿，所以前端只把这些字段追加到本地草稿，不把它伪装成完整的 `message/alternative/supplement`。
 
 ## Multi-Agent 接入
 
