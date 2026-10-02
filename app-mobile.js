@@ -1,0 +1,117 @@
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const examples={rental:{name:'租房合同 · 示例',title:'房屋租赁合同',intro:'第六条　房屋的使用与维护',clauses:['6.1　承租人应按照约定用途合理使用房屋及其附属设施，不得从事违法活动。','6.2　承租人应妥善保管房屋及设施，如有损坏应及时维修并承担相应费用。','6.3　未经出租人书面同意，承租人不得擅自改变房屋结构或在墙面打孔。','6.4　因承租人使用不当造成房屋及设施损坏的，承租人应承担维修或赔偿责任。','7.1　租赁期限为一年，自双方约定的交付日起计算。','7.2　租赁期满，承租人结清各项费用并交还房屋后，出租人应在七日内退还剩余押金。','7.3　提前解除合同须提前三十日书面通知对方，具体费用由双方另行协商。'],question:'我能在墙上装书架吗？',goal:'我想在客厅安装书架'},privacy:{name:'隐私协议 · 示例',title:'应用隐私协议',intro:'第二条　个人信息的使用',clauses:['2.1　我们收集您主动提供的账户信息，用于创建和管理账户。','2.2　经您单独同意后，我们可将必要信息提供给合作方用于个性化推荐。您可在设置中撤回此项同意。','2.3　注销账户后，我们将在三十日内删除或匿名化处理相关个人信息，但依法需要保留的除外。'],question:'我可以关闭个性化推荐吗？',goal:'我希望关闭个性化推荐并确认数据处理方式'},labor:{name:'劳动合同 · 示例',title:'劳动合同',intro:'第三条　工作安排与薪酬',clauses:['3.1　乙方工作岗位为产品设计师，工作地点为上海市。','3.2　乙方月基本工资为人民币一万元，绩效奖金按照甲方另行制定的考核方案执行。','3.3　岗位调整应由甲乙双方协商一致，并以书面形式确认。'],question:'绩效奖金有明确标准吗？',goal:'我希望签约前确认绩效奖金的计算和发放条件'}};
+const state={page:'home',tab:'text',text:'',question:'',sample:null,doc:null,selected:2,workTab:'message',analysisTab:'analysis',goal:'',condition:true,history:[],file:null,drafts:{},answer:null,findings:null};
+/* ===== Multi-Agent 接入层（AgentBridge）=====
+ * 默认 local 模式：所有逻辑在浏览器本地完成，不发出任何网络请求（与离线版行为一致）。
+ * 两种接入方式（协议与示例见 docs/MULTI_AGENT_INTERFACE.md）：
+ *   A. HTTP 端点：在引入本文件之前设置
+ *      window.YUEDING_AGENT_CONFIG = { endpoint: 'https://…/api/agent', headers: {…可选}, timeout: 60000 }
+ *   B. JS Provider：页面加载后调用
+ *      window.YuedingAgent.registerProvider('myAgent', { analyze, draft, extract })
+ * 能力（capability）：analyze（条款定位+问答） / draft（协商草稿） / extract（PDF·OCR 文本提取，预留）
+ * 任一能力失败时自动回退本地实现，页面始终可用。 */
+const localAgent={
+  analyze:()=>({findings:findingsData(),answer:answerFor(state.question||'请检查合同')}),
+  draft:()=>makeDrafts(),
+  extract:()=>{throw new Error('local 模式未实现文件解析，请通过 YUEDING_AGENT_CONFIG 接入外部智能体')}
+};
+const AgentBridge={
+  config:Object.assign({mode:'local',endpoint:null,headers:null,timeout:60000},window.YUEDING_AGENT_CONFIG||{}),
+  providers:{},
+  registerProvider(name,impl){this.providers[name]=impl;this.config.mode=name;return this},
+  hasAgent(){return !!this.providers[this.config.mode]||!!this.config.endpoint},
+  async call(capability,payload){
+    const provider=this.providers[this.config.mode];
+    if(provider&&typeof provider[capability]==='function')return await provider[capability](payload,state);
+    if(this.config.endpoint)return await this.http(capability,payload);
+    if(typeof localAgent[capability]==='function')return await localAgent[capability](payload,state);
+    throw new Error('unsupported capability: '+capability)
+  },
+  async http(capability,payload){
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),this.config.timeout);
+    try{
+      const res=await fetch(this.config.endpoint,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},this.config.headers||{}),body:JSON.stringify({capability,payload,client:'yueding-web',version:1}),signal:ctl.signal});
+      if(!res.ok)throw new Error('agent endpoint HTTP '+res.status);
+      const data=await res.json();
+      if(data&&data.error)throw new Error(String(data.error));
+      return data.result!==undefined?data.result:data
+    }finally{clearTimeout(timer)}
+  }
+};
+window.YuedingAgent=AgentBridge;
+async function refreshAnalysis(){
+  if(!state.doc||state.doc.isSample||!AgentBridge.hasAgent())return;
+  try{
+    toast('智能体分析中…');
+    const r=await AgentBridge.call('analyze',{question:state.question,contract:{title:state.doc.title,intro:state.doc.intro,clauses:state.doc.clauses,isSample:false}});
+    let updated=false;
+    if(r&&Array.isArray(r.findings)){
+      state.findings=r.findings.map(f=>({key:String(f&&f.key||'item'),title:String(f&&f.title||'合同要点'),desc:String(f&&f.desc||''),index:Number.isInteger(f&&f.index)?f.index:-1}));
+      updated=true
+    }
+    if(r&&r.answer&&r.answer.title){
+      state.answer={title:String(r.answer.title),text:String(r.answer.text||''),index:Number.isInteger(r.answer.index)?r.answer.index:-1};
+      if(state.answer.index>=0&&state.answer.index<state.doc.clauses.length)state.selected=state.answer.index;
+      updated=true
+    }
+    if(updated)render()
+  }catch(e){toast('智能体服务不可用，已回退本地分析')}
+}
+async function agentDrafts(){
+  if(!AgentBridge.hasAgent()||!state.doc)return;
+  try{
+    const r=await AgentBridge.call('draft',{goal:state.goal,condition:state.condition,clause:state.doc.clauses[state.selected]||'',contract:{title:state.doc.title,clauses:state.doc.clauses,isSample:state.doc.isSample}});
+    if(r&&(r.message||r.alternative||r.supplement)){
+      state.drafts=Object.assign({},makeDrafts(),state.drafts,r);
+      render();toast('智能体已更新沟通草稿')
+    }
+  }catch(e){/*失败时保留本地模板草稿*/}
+}
+function toast(msg){$('#toast').textContent=msg;$('#toast').classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),2600)}
+function steps(n){return `<div class="steps">${['导入材料','阅读与提问','确认与协商'].map((t,i)=>`${i?'<i></i>':''}<span class="${i+1===n?'current':''}"><b>${i+1}</b>${t}</span>`).join('')}</div>`}
+function navigate(page){if(['analysis','workshop'].includes(page)&&!state.doc)page='home';state.page=page;if(page==='analysis'&&!state.analysisTab)state.analysisTab='analysis';document.body.classList.remove('nav-open');history.replaceState(null,'','#'+page);render();window.scrollTo({top:0,behavior:'smooth'})}
+function render(){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.route===state.page));const t=$('#nav-toggle');if(t){t.setAttribute('aria-expanded',document.body.classList.contains('nav-open')?'true':'false');t.setAttribute('aria-label',document.body.classList.contains('nav-open')?'关闭主导航':'打开主导航')}$('#app').innerHTML=`<div class="fade">${({home:home,analysis:analysis,workshop:workshop,contracts:contracts,templates:templates,help:help}[state.page]||home)()}</div>`;bind()}
+function exampleCards(){return `<div class="example-grid">${[['rental','租房合同','房屋租赁、押金、维修、转租'],['privacy','隐私协议','个人信息使用、数据共享、撤回同意'],['labor','劳动合同','工作安排、薪酬、岗位调整']].map(([k,t,d])=>`<button class="example" data-sample="${k}"><span class="doc-icon">▤</span><span><strong>${t}</strong><small>${d}</small></span><span class="chevron">›</span></button>`).join('')}</div>`}
+function home(){return `${steps(1)}<section class="hero"><div class="eyebrow">EVERY AGREEMENT MATTERS</div><h1>读懂约定，再做决定</h1><p>上传合同或协议，找到与你有关的答案</p></section><section class="import-card"><div class="tabs" role="tablist">${[['text','♧','粘贴文本'],['pdf','↥','上传 PDF'],['image','▧','截图识别'],['url','⌁','输入链接']].map(([k,i,t])=>`<button role="tab" aria-selected="${state.tab===k}" class="${state.tab===k?'active':''}" data-tab="${k}"><span class="icon">${i}</span>${t}</button>`).join('')}</div><div class="input-area">${inputContent()}</div><div class="input-bottom"><label class="question-input"><span>♧</span><input id="initial-question" aria-label="你最关心的问题" placeholder="你最关心什么？（可选）" maxlength="200" value="${esc(state.question)}"></label><button id="analyze" class="primary">✧　开始分析</button></div><p class="hint">例如：我能在墙上装书架吗？ / 押金怎么退？ / 可以提前解约吗？</p><div id="input-error" class="error" role="alert"></div></section><section class="examples"><div class="section-label">没有合同？试试示例</div>${exampleCards()}</section><p class="trust">◇　输入仅在当前页面内处理 · 示例内容为虚构材料</p>`}
+function inputContent(){if(state.tab==='text')return `<textarea id="contract-text" aria-label="合同文本" maxlength="50000" placeholder="在这里粘贴合同或协议内容…">${esc(state.text)}</textarea><span class="count">${state.text.length.toLocaleString()} / 50,000</span>`;if(state.tab==='url')return `<div class="upload-zone"><span>粘贴协议链接</span><input class="url-input" id="url" type="url" placeholder="https://example.com/privacy" aria-label="协议链接"><small>体验版暂不抓取网页，请复制页面正文到「粘贴文本」</small></div>`;return `<label class="upload-zone" id="dropzone"><span style="font-size:28px;color:#7995dc">${state.tab==='pdf'?'▤':'▧'}</span><strong>${state.file?esc(state.file.name):'点击选择或拖拽'+(state.tab==='pdf'?' PDF 文件':'合同截图')}</strong><span>文件仅用于本地预览，尚未接入${state.tab==='pdf'?' PDF 文字提取':' OCR 识别'}</span><input id="file" type="file" accept="${state.tab==='pdf'?'.pdf':'image/*'}"><small>要体验分析，请粘贴正文或选择下方示例</small>${state.file?'<button type="button" id="preview-file" class="quiet">打开文件预览</button>':''}</label>`}
+function chooseSample(k){const s=examples[k];state.sample=k;state.doc={...s,clauses:[...s.clauses],isSample:true};state.question=s.question;state.goal=s.goal;state.selected=k==='rental'?2:1;state.drafts={};state.answer=null;state.findings=null;state.workTab='message';state.analysisTab='analysis';if(!state.history.some(x=>x.name===s.name))state.history.push(state.doc);navigate('analysis')}
+function startAnalysis(){if(state.tab!=='text'){const e=$('#input-error');e.textContent=state.tab==='url'?'请将网页中的合同正文复制到「粘贴文本」后分析。':'文件预览已支持；分析请粘贴正文，或选择示例合同。';return}state.text=$('#contract-text').value.trim();state.question=$('#initial-question').value.trim();if(state.text.length<15){$('#input-error').textContent='请粘贴至少 15 个字的合同内容，或选择下方示例。';return}state.sample=null;state.doc={name:'我的合同 · 文本',title:'合同原文',intro:'导入的合同内容',clauses:state.text.split(/\n+/).filter(Boolean),isSample:false};state.selected=0;state.goal=state.question||'我希望确认这份合同中尚未明确的安排';state.answer=null;state.findings=null;state.drafts={};state.analysisTab='analysis';state.history.push(state.doc);navigate('analysis');refreshAnalysis()}
+function clauseIndex(topic){let regex={deposit:/押金/,wall:/打孔|书架|改动/,repair:/维修/,leave:/提前|解除|退租/,privacy:/推荐|撤回/,salary:/奖金|绩效/}[topic]||new RegExp('a^');return state.doc.clauses.findIndex(x=>regex.test(x))}
+function findingsData(){const items=state.sample==='privacy'?[['privacy','个性化推荐','撤回同意与个人信息处理']]:state.sample==='labor'?[['salary','绩效奖金','考核方案与发放条件']]:[['deposit','押金返还','退还时间与扣减条件'],['wall','墙面改动','安装书架前的书面确认'],['repair','维修责任','设施损坏由谁负责'],['leave','提前退租','通知时间与费用约定']];return items.map(([k,t,d])=>({key:k,title:t,desc:d,index:clauseIndex(k)}))}
+function findings(){return (state.findings||findingsData()).map(f=>`<button class="finding ${state.selected===f.index?'active':''}" data-clause="${f.index}" data-topic="${esc(f.key)}"><span class="finding-icon">${f.key==='wall'?'⌂':'▤'}</span><span><strong>${esc(f.title)}</strong><small>${f.index<0?'未找到相关约定':esc(f.desc)}</small></span><span class="chevron">›</span></button>`).join('')}
+function answerFor(q){const topic=/押金/.test(q)?'deposit':/打孔|书架|改动|安装/.test(q)?'wall':/维修|修理/.test(q)?'repair':/退租|解约|解除/.test(q)?'leave':/推荐|信息|隐私/.test(q)?'privacy':/绩效|奖金/.test(q)?'salary':null;const i=topic?clauseIndex(topic):-1;if(i<0)return {title:'需要进一步核对',text:'未找到能够直接回答该问题的相关约定。请核对完整合同，并向对方书面确认。当前体验版仅进行关键词匹配。',index:-1};if(!state.doc.isSample)return {title:'找到相关原文，待人工确认',text:'下方定位到了包含相关关键词的段落，请结合完整上下文核对。体验版不对这份合同作自动法律判断。',index:i};const a={wall:['需房东书面确认','示例合同要求墙面打孔须取得出租人书面同意。建议先确认安装位置、方式及退租恢复标准。'],deposit:['七日内返还剩余押金','示例合同约定结清费用并交还房屋后七日内退还剩余押金；具体扣减项目和凭证还需确认。'],repair:['需核对损坏原因','示例合同对使用不当造成的损坏约定由承租人承担责任；自然损耗和设施老化的安排仍需确认。'],leave:['提前三十日书面通知','示例合同要求提前三十日书面通知，但费用写为另行协商，建议把金额或计算方式写清。'],privacy:['可在设置中撤回同意','示例协议允许撤回个性化推荐同意。可进一步确认关闭后的处理范围。'],salary:['奖金标准需进一步确认','示例合同引用了另行制定的考核方案，未写明具体标准。建议签约前索取并核对方案。']}[topic];return {title:a[0],text:a[1],index:i}}
+function analysis(){let a=state.answer||answerFor(state.question||'请检查合同');return `${steps(2)}<div class="page-head analysis-title"><div><h1>▤　${esc(state.doc.name)}</h1><p>${state.doc.isSample?'虚构示例 · 用于体验阅读与协商流程':'本地文本 · 关键词辅助定位'}</p></div><button class="quiet" data-route="home">↻　重新导入</button></div><div class="mobile-view-tabs" role="tablist" aria-label="分析内容切换">${[['analysis','▥','分析'],['source','▤','合同原文']].map(([k,i,t])=>`<button role="tab" aria-selected="${state.analysisTab===k}" class="${state.analysisTab===k?'active':''}" data-analysis-view="${k}">${i}　${t}</button>`).join('')}</div><div class="workspace show-${state.analysisTab}"><section class="pane source-pane"><div class="pane-head"><h2>合同原文</h2><div class="pager"><span>完整条款</span><span class="label">${state.doc.clauses.length} 段</span></div></div><div class="paper"><h3>${esc(state.doc.intro)}</h3>${state.doc.clauses.map((x,i)=>`<div id="clause-${i}" tabindex="0" role="button" class="clause ${i===state.selected?'selected':''}" data-clause="${i}">${esc(x)}</div>`).join('')}</div><div class="paper-footer">${esc(state.doc.title)} · 点击条目定位原文</div></section><section class="pane analysis-pane"><div class="pane-head"><h2>分析与提问</h2><span class="label">${state.doc.isSample?'示例解读':'辅助定位'}</span></div><div class="analysis-body"><h3 class="subhead">合同要点</h3>${findings()}<div class="chat"><h3 class="subhead">你的提问</h3><div class="bubble">♧　${esc(state.question||'哪些事项需要提前确认？')}</div><div class="answer"><strong>ⓘ　${esc(a.title)}</strong>${esc(a.text)}${a.index>=0?`<br><button class="source-btn" data-clause="${a.index}">▤　查看原文 · 第 ${a.index+1} 段</button>`:''}</div><form id="ask-form" class="ask"><input id="ask-input" aria-label="继续提问" placeholder="继续问这份合同…" maxlength="200" required><button aria-label="提交问题" type="submit">➤</button></form></div><div class="pane-actions"><button class="primary" data-route="workshop">去工坊，生成确认消息</button></div></div></section></div>`}
+function makeDrafts(){let excerpt=state.doc.clauses[state.selected]||'合同未明确相关约定';let goal=state.goal;let wall=/书架|打孔|安装/.test(goal);return {message:wall?'您好，我想在客厅安装书架。如果需要打孔，想先征得您的书面同意。我们能否一起确认安装位置、安装方式和退租时的恢复标准，并把这些写入补充约定？':`您好，关于「${goal}」，想在签约前和您进一步确认。合同中写到「${excerpt}」。我们能否把具体条件、各自责任和处理方式明确下来，并以书面形式确认？`,alternative:wall?'如果不方便打孔，我可以考虑免打孔或落地书架。也请您告诉我可接受的安装方式，我们再一起确认。':`如果暂时无法按「${goal}」安排，我希望了解您可以接受的替代条件，并一起确认具体时间、费用及各自责任。`,supplement:`补充约定（待双方核对）\n\n一、协商事项：${goal}。\n二、具体安排：[由双方填写位置、方式、时间及其他条件]。\n三、责任承担：${state.condition?'可接受退租时恢复墙面，具体标准须由双方确认。':'[由双方另行填写并确认]'}\n四、本草稿待双方核对具体内容后，再按双方认可的方式确认。\n\n甲方：________　乙方：________\n日期：________`}}
+function workshop(){if(!state.drafts.message)state.drafts=makeDrafts();let titles={message:'给对方的确认消息',alternative:'备选：换一种方式达成目标',supplement:'补充约定草稿'};return `${steps(3)}<button class="back" data-route="analysis">‹　返回分析</button><div class="page-head"><div><h1>确认与协商工坊</h1><p>把想法说清楚，为下一步沟通做好准备。</p></div><span class="label">待双方确认</span></div><div class="workshop"><aside class="panel"><h2>⌂　当前协商事项</h2><label class="field-label">依据</label><div class="evidence">▤　合同原文 · 第 ${state.selected+1} 段<p>${esc(state.doc.clauses[state.selected]||'未找到相关约定')}</p><button class="source-btn" data-open-source="${state.selected}">查看完整原文</button></div><label class="field-label" for="goal">我的目标</label><textarea class="edit" id="goal" maxlength="200">${esc(state.goal)}</textarea><label class="field-label">可接受的条件（可选）</label><label class="check"><input id="condition" type="checkbox" ${state.condition?'checked':''}>可接受退租时恢复墙面</label><button class="primary full" id="generate">✧　生成方案</button><p class="hint">按目标生成沟通模板，修改后再发送。</p></aside><section class="panel"><h2>准备好下一步沟通</h2><div class="work-tabs" role="tablist">${[['message','✉','确认消息'],['alternative','♧','替代方案'],['supplement','▤','补充约定']].map(([k,i,t])=>`<button data-worktab="${k}" role="tab" aria-selected="${state.workTab===k}" class="${state.workTab===k?'active':''}">${i}　${t}</button>`).join('')}</div><div class="warning">所有内容均为沟通草稿，可直接编辑。补充约定需双方核对与确认。</div><div class="draft-head"><strong>${titles[state.workTab]}</strong><span class="green">草稿 · 可编辑</span></div><div class="draft-card"><textarea id="draft" aria-label="方案草稿" style="min-height:${state.workTab==='supplement'?290:180}px">${esc(state.drafts[state.workTab])}</textarea><div class="draft-tools"><span id="draft-count">${state.drafts[state.workTab].length} 字</span><button id="copy-small">▢　复制</button><button id="clear-draft">清空</button></div></div>${state.workTab==='message'?'<p class="hint" style="margin-top:16px">沟通小提示：先说明想做什么，再询问对方的条件，最后留下双方认可的书面记录。</p>':''}<div class="work-actions"><button class="quiet" id="regenerate">↻　重新生成</button><button class="primary" id="copy">▢　复制${state.workTab==='supplement'?'草稿':'消息'}</button></div></section></div>`}
+function contracts(){return `<div class="page-head"><div><h1>我的合同</h1><p>当前页面会话内的阅读记录，刷新后清空。</p></div><button class="primary" data-route="home">导入合同</button></div><div class="collection">${state.history.length?state.history.map((d,i)=>`<button data-history="${i}"><span>▤　${esc(d.name)}</span><span class="label">继续阅读</span></button>`).join(''):'<div class="panel empty">还没有阅读记录。导入一份合同，或从示例开始。</div>'}</div>`}
+function templates(){return `<div class="page-head"><div><h1>模板库</h1><p>选择虚构示例，体验不同场景的阅读流程。</p></div></div>${exampleCards()}<p class="hint" style="margin-top:20px">示例仅展示阅读交互，不是可直接签署的合同范本。</p>`}
+function help(){return `<div class="help"><div class="page-head"><div><h1>帮助中心</h1><p>更清楚地使用约定。</p></div></div>${[['这份网站可以做什么？','你可以体验导入、原文对照、条款定位、提问反馈、协商模板生成、编辑与复制。租房、隐私和劳动合同示例均为虚构。'],['分析结果从哪里来？','示例合同使用预先编写的解读；你粘贴的文本仅按关键词定位相关段落。当前未接入 AI 审阅，不会对真实合同作确定性法律结论。'],['PDF、截图与链接如何使用？','PDF 和截图支持本地选择及预览，尚未接入文字提取或 OCR。链接暂不自动抓取。你可以将正文复制到文本框，或选择示例体验完整流程。'],['合同内容会被保存吗？','当前版本仅在浏览器页面内存中处理内容，不向分析服务发送合同。我的合同只记录本次会话，刷新页面后清空。'],['生成的消息会自动发送吗？','不会。你可以修改并复制草稿，由你决定何时通过自己的沟通渠道发送。补充约定也需要双方核对后确认。'],['接入智能体后，合同内容会发送到哪里？','默认不接入任何智能体，全部内容仅在浏览器本地处理。只有当部署方按 docs/MULTI_AGENT_INTERFACE.md 配置了智能体端点时，合同文本才会发送到该端点用于分析；端点未配置或不可用时自动回退本地分析。']].map(([q,a])=>`<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</div>`}
+async function copyDraft(){let txt=$('#draft').value;if(!txt.trim())return toast('草稿为空，请先生成或输入内容');try{await navigator.clipboard.writeText(txt);toast('已复制，可粘贴到聊天中')}catch(e){$('#draft').focus();$('#draft').select();toast('请按 Ctrl+C 或长按复制选中的文字')}}
+function isMobileView(){return window.matchMedia&&window.matchMedia('(max-width:800px)').matches}
+function scrollClause(i){
+  const el=$('#clause-'+i);
+  if(!el)return;
+  document.querySelectorAll('.clause').forEach((c,j)=>c.classList.toggle('selected',i===j));
+  document.querySelectorAll('.finding').forEach(c=>c.classList.toggle('active',Number(c.dataset.clause)===i));
+  el.scrollIntoView({behavior:'smooth',block:'center'})
+}
+function selectClause(i,openSource=false){
+  if(i<0)return toast('未找到相关约定，请向对方进一步确认');
+  state.selected=i;
+  const shouldOpen=openSource||isMobileView();
+  if(shouldOpen&&state.analysisTab!=='source'){state.analysisTab='source';render();requestAnimationFrame(()=>scrollClause(i));return}
+  scrollClause(i)
+}
+function bindTabKeys(scope='[role="tab"]'){
+  document.querySelectorAll(scope).forEach((b,idx,arr)=>b.onkeydown=e=>{
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+    e.preventDefault();
+    let n=e.key==='Home'?0:e.key==='End'?arr.length-1:idx+(e.key==='ArrowRight'?1:-1);
+    arr[(n+arr.length)%arr.length].focus();
+    arr[(n+arr.length)%arr.length].click()
+  })
+}
+function bind(){const navToggle=$('#nav-toggle');if(navToggle)navToggle.onclick=()=>{document.body.classList.toggle('nav-open');render()};document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>navigate(b.dataset.route));document.querySelectorAll('[data-sample]').forEach(b=>b.onclick=()=>chooseSample(b.dataset.sample));document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.file=null;render()});document.querySelectorAll('[data-analysis-view]').forEach(b=>b.onclick=()=>{state.analysisTab=b.dataset.analysisView;render();if(state.analysisTab==='source')requestAnimationFrame(()=>scrollClause(state.selected))});if($('#contract-text'))$('#contract-text').oninput=e=>{state.text=e.target.value;$('.count').textContent=state.text.length.toLocaleString()+' / 50,000'};if($('#initial-question'))$('#initial-question').oninput=e=>state.question=e.target.value;if($('#analyze'))$('#analyze').onclick=startAnalysis;if($('#file')){$('#file').onchange=e=>selectFile(e.target.files[0]);let z=$('#dropzone');z.ondragover=e=>{e.preventDefault();z.classList.add('drag')};z.ondragleave=()=>z.classList.remove('drag');z.ondrop=e=>{e.preventDefault();selectFile(e.dataTransfer.files[0])}}if($('#preview-file'))$('#preview-file').onclick=e=>{e.preventDefault();let u=URL.createObjectURL(state.file);window.open(u,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(u),60000)};document.querySelectorAll('[data-clause]').forEach(b=>{b.onclick=()=>selectClause(Number(b.dataset.clause),!b.classList.contains('clause'));if(b.classList.contains('clause'))b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();b.click()}}});document.querySelectorAll('[data-open-source]').forEach(b=>b.onclick=()=>{state.analysisTab='source';state.page='analysis';history.replaceState(null,'','#analysis');render();requestAnimationFrame(()=>selectClause(Number(b.dataset.openSource),true))});if($('#ask-form'))$('#ask-form').onsubmit=async e=>{e.preventDefault();const q=$('#ask-input').value.trim();if(!q)return;state.question=q;state.goal=q;state.answer=answerFor(q);if(state.answer.index>=0)state.selected=state.answer.index;state.analysisTab='analysis';state.findings=null;state.drafts={};render();refreshAnalysis()};document.querySelectorAll('[data-worktab]').forEach(b=>b.onclick=()=>{state.workTab=b.dataset.worktab;render()});if($('#goal'))$('#goal').oninput=e=>state.goal=e.target.value;if($('#condition'))$('#condition').onchange=e=>state.condition=e.target.checked;if($('#draft'))$('#draft').oninput=e=>{state.drafts[state.workTab]=e.target.value;$('#draft-count').textContent=e.target.value.length+' 字'};for(const id of ['generate','regenerate'])if($('#'+id))$('#'+id).onclick=async()=>{if(!state.goal.trim())return toast('请先填写你的目标');state.drafts=makeDrafts();render();toast('已根据目标生成沟通草稿');agentDrafts()};for(const id of ['copy','copy-small'])if($('#'+id))$('#'+id).onclick=copyDraft;if($('#clear-draft'))$('#clear-draft').onclick=()=>{state.drafts[state.workTab]='';$('#draft').value='';$('#draft-count').textContent='0 字';$('#draft').focus()};document.querySelectorAll('[data-history]').forEach(b=>b.onclick=()=>{state.doc=state.history[Number(b.dataset.history)];state.sample=Object.keys(examples).find(k=>examples[k].name===state.doc.name)||null;state.question=state.doc.question||'';state.goal=state.doc.goal||'确认合同安排';state.selected=state.sample==='rental'?2:0;state.analysisTab='analysis';state.answer=null;state.findings=null;state.drafts={};navigate('analysis');refreshAnalysis()});bindTabKeys()}
+function selectFile(f){if(!f)return;const valid=state.tab==='pdf'?f.type==='application/pdf'||/\.pdf$/i.test(f.name):f.type.startsWith('image/');if(!valid)return toast('请选择对应格式的文件');if(f.size>20*1024*1024)return toast('请选择小于 20 MB 的文件');state.file=f;render();toast('已选择文件，可打开本地预览')}
+window.addEventListener('hashchange',()=>navigate(location.hash.slice(1)||'home'));render();
+if(document.modelContext?.registerTool){const lifecycle=new AbortController();try{Promise.resolve(document.modelContext.registerTool({name:'open_contract_example',description:'打开一个虚构合同示例并进入分析页。',inputSchema:{type:'object',properties:{sample:{type:'string',enum:['rental','privacy','labor']}},required:['sample'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute(input){if(!input||!Object.hasOwn(examples,input.sample))throw new Error('Unknown example');chooseSample(input.sample);return {page:state.page,title:state.doc.title}}},{signal:lifecycle.signal})).catch(()=>{});window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true})}catch(e){}}
