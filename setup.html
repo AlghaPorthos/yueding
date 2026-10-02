@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>约定 · 本机设置</title><link rel="stylesheet" href="demo-api.css"><script type="module" src="setup.js"></script></head>
+<body>
+<header class="top"><div class="shell bar"><a class="brand" href="/"><span class="brand-mark">约</span>约定<span class="wordmark">YUEDING</span></a><a href="/">返回体验 →</a></div></header>
+<main class="shell setup-shell">
+<div class="hero"><div><div class="eyebrow">本地中转 · 一次配置</div><h1>连接你的<span>分析服务</span></h1><p>浏览器 → 本机中转 → Dify 工作流。无需部署服务器，体验全程留在「约定」界面。</p></div></div>
+<section class="panel setup-panel">
+<div class="panel-title"><h2>Dify 应用 API Key</h2><span>仅在本机配置</span></div>
+<p>在 Dify 工作室打开对应工作流，进入「访问 API / API 访问」，创建应用 API Key。租房体验只需填写第一项；其余可稍后添加。</p>
+<p class="privacy-note">请使用应用 API Key（通常以 app- 开头），不要填写模型供应商密钥或 udify.app 分享链接。</p>
+<form id="setup-form">
+<label class="field-label" for="rental">租房合同 <span id="rental-state">读取状态中</span></label><input id="rental" type="password" autocomplete="new-password" spellcheck="false" placeholder="粘贴租房工作流的应用 API Key">
+<label class="field-label" for="employment">入职文件 · 选填 <span id="employment-state"></span></label><input id="employment" type="password" autocomplete="new-password" spellcheck="false" placeholder="留空则保留已有配置">
+<label class="field-label" for="privacy">应用协议 · 选填 <span id="privacy-state"></span></label><input id="privacy" type="password" autocomplete="new-password" spellcheck="false" placeholder="留空则保留已有配置">
+<details class="context"><summary>API 地址 <span>Dify Cloud 默认已填好</span></summary><label for="api-base">服务地址（包含 /v1）</label><input id="api-base" type="url" required value="https://api.dify.ai/v1" spellcheck="false"></details>
+<div class="form-actions"><button class="primary" id="save" disabled>验证并保存 →</button><a class="setup-return" href="/">进入体验</a></div>
+<p id="setup-status" class="service-note" role="status">正在读取本机配置状态…</p>
+<div id="setup-error" class="error" role="alert" hidden></div>
+</form>
+<p class="privacy-note">密钥保存在本机 .local-dify.json，仅当前系统用户可读写，不会回传到网页。验证只读取工作流字段，不上传文件、不调用模型。正式提问时，文件与问题仍会经本机发送至 Dify 及其配置的模型服务。</p>
+</section>
+<footer><span>约定 · 签字之前，把话说清楚。</span><span>关闭本地服务后，此页面暂不可访问。</span></footer>
+</main></body></html>

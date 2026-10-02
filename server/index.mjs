@@ -3,6 +3,7 @@ import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
+import { isLoopback, isLocalRequest, localSettingsHandler, loadLocalSettings, normalizeBase } from './local-settings.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const MAX_FILE = 15 * 1024 * 1024;
@@ -19,6 +20,9 @@ const staticFiles = {
   '/index.html': ['index.html', 'text/html; charset=utf-8'],
   '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
   '/style.css': ['style.css', 'text/css; charset=utf-8'],
+  '/setup': ['setup.html', 'text/html; charset=utf-8'],
+  '/setup.html': ['setup.html', 'text/html; charset=utf-8'],
+  '/setup.js': ['setup.js', 'text/javascript; charset=utf-8'],
 };
 
 class PublicError extends Error {
@@ -69,12 +73,11 @@ function publicUpstreamError(status) {
 
 export function createApp(options = {}) {
   const env = options.env || process.env;
-  const base = (env.DIFY_API_BASE || 'https://api.dify.ai/v1').replace(/\/$/, '');
-  const baseURL = new URL(base);
-  if (baseURL.protocol !== 'https:' && !['localhost', '127.0.0.1', '[::1]'].includes(baseURL.hostname))
-    throw new Error('DIFY_API_BASE must use HTTPS');
+  let base = normalizeBase(env.DIFY_API_BASE || 'https://api.dify.ai/v1');
   const keys = { rental: env.DIFY_RENTAL_API_KEY, employment: env.DIFY_EMPLOYMENT_API_KEY, privacy: env.DIFY_PRIVACY_API_KEY };
   const fetcher = options.fetch || fetch;
+  const handleSettings = localSettingsHandler({ path: options.localConfigPath, fetcher,
+    getSettings: () => ({base,keys}), applySettings: next => { base=next.base; Object.assign(keys,next.keys); } });
   const rates = new Map(); let active = 0;
   return createServer(async (req, res) => {
     const path = new URL(req.url, 'http://localhost').pathname;
@@ -92,8 +95,10 @@ export function createApp(options = {}) {
       if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
     }
     const json = (status, value) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(value)); };
+    if (await handleSettings(req,res)) return;
     if (path === '/api/config' && req.method === 'GET') {
-      json(200, { scenarios: Object.fromEntries(scenarioKeys.map(k => [k, Boolean(keys[k])])), accessCodeRequired: Boolean(env.DEMO_ACCESS_CODE), maxFileBytes: MAX_FILE }); return;
+      json(200, { scenarios: Object.fromEntries(scenarioKeys.map(k => [k, Boolean(keys[k])])), accessCodeRequired: Boolean(env.DEMO_ACCESS_CODE), maxFileBytes: MAX_FILE,
+        localSetup: Boolean(options.localConfigPath) && isLocalRequest(req) }); return;
     }
     if (req.method === 'GET' && staticFiles[path]) {
       try {
@@ -114,6 +119,7 @@ export function createApp(options = {}) {
     entry.count++; rates.set(ip, entry); active++;
     const controller = new AbortController();
     let taskId; let user; let apiKey; let finished = false; let heartbeat;
+    let runBase;
     const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 240000);
     const send = (event, data) => { if (!res.destroyed && !res.writableEnded) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); };
     res.on('close', () => { if (!finished) controller.abort(); });
@@ -122,6 +128,7 @@ export function createApp(options = {}) {
       const scenario = String(form.get('scenario') || '');
       if (!scenarioKeys.includes(scenario)) throw new PublicError(400, '请选择有效场景。');
       apiKey = keys[scenario];
+      runBase = base;
       if (!apiKey) throw new PublicError(503, '此场景的分析服务尚未连接。');
       const file = form.get('file');
       if (!file || typeof file.arrayBuffer !== 'function' || !file.size) throw new PublicError(400, '请选择非空文件。');
@@ -139,12 +146,12 @@ export function createApp(options = {}) {
       // Avoid forwarding a person's name in the local filename.
       upload.set('file', file, `document.${ext}`); upload.set('user', user);
       const headers = { Authorization: `Bearer ${apiKey}` };
-      const uploaded = await fetcher(`${base}/files/upload`, { method: 'POST', headers, body: upload, signal: controller.signal });
+      const uploaded = await fetcher(`${runBase}/files/upload`, { method: 'POST', headers, body: upload, signal: controller.signal });
       if (!uploaded.ok) throw publicUpstreamError(uploaded.status);
       const metadata = await uploaded.json();
       if (!metadata.id || typeof metadata.id !== 'string') throw new PublicError(502, '文件上传未返回有效编号，请重试。');
       send('progress', { stage: 'extract', message: '文件已上传，正在读取条款…' });
-      const response = await fetcher(`${base}/workflows/run`, { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
+      const response = await fetcher(`${runBase}/workflows/run`, { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ inputs: makeInputs(scenario, metadata.id, fields), response_mode: 'streaming', user }), signal: controller.signal });
       if (!response.ok) throw publicUpstreamError(response.status);
       const { readSSE } = await import('../sse.mjs');
@@ -178,7 +185,7 @@ export function createApp(options = {}) {
     } finally {
       clearTimeout(timeout); clearInterval(heartbeat);
       if (!finished && taskId && user && apiKey) {
-        void fetcher(`${base}/workflows/tasks/${encodeURIComponent(taskId)}/stop`, { method: 'POST',
+        void fetcher(`${runBase}/workflows/tasks/${encodeURIComponent(taskId)}/stop`, { method: 'POST',
           headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ user }), signal: AbortSignal.timeout(5000) }).catch(() => {});
       }
       active--; finished = true; res.end();
@@ -190,5 +197,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const host = process.env.HOST || '127.0.0.1';
   if (!['127.0.0.1', 'localhost', '::1'].includes(host) && !process.env.DEMO_ACCESS_CODE)
     throw new Error('Set DEMO_ACCESS_CODE before listening on a public interface.');
-  createApp().listen(Number(process.env.PORT || 8787), host, () => console.log(`Yueding API demo: http://${host}:${process.env.PORT || 8787}`));
+  const localConfigPath = isLoopback(host) && process.env.LOCAL_SETUP !== '0' ? join(root,'.local-dify.json') : undefined;
+  const saved = localConfigPath ? await loadLocalSettings(localConfigPath) : {};
+  createApp({env:{...process.env,...saved},localConfigPath}).listen(Number(process.env.PORT || 8787), host, () => console.log(`Yueding API demo: http://${host}:${process.env.PORT || 8787}`));
 }

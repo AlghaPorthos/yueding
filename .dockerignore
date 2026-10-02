@@ -7,3 +7,4 @@ outputs
 work
 *.pdf
 *.log
+.local-dify.json*

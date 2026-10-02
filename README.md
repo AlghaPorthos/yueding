@@ -79,3 +79,7 @@ window.YuedingAgent.registerProvider('myAgent', { analyze, draft, extract });
 
 - 本项目为交互原型，示例合同均为虚构内容，输出不构成法律意见。
 - 未附带开源许可证；如需开放二次使用，请自行添加 LICENSE。
+
+## 无服务器的本地体验
+
+双击 `start-local.command`，打开 http://127.0.0.1:8787/ ，从右上角「本机设置」填写对应 Dify 应用 API Key。完成后直接上传文件、提问和查看结果。密钥仅保存在本机，文件分析仍通过 Dify 云端工作流。完整说明见 [API_DEMO.md](docs/API_DEMO.md)。

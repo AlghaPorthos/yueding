@@ -36,7 +36,7 @@ function showError(text) { $('#error').textContent = text; $('#error').hidden = 
 function availability() {
   const ready = Boolean(state.config?.scenarios[state.scene]);
   $('#submit').disabled = state.busy || !ready;
-  $('#service-note').textContent = state.busy ? '正在核对，完成后会显示在右侧。' : ready ? '服务已连接，可以开始核对。' : '分析服务尚未连接。连接后即可提交文件与问题。';
+  $('#service-note').textContent = state.busy ? '正在核对，完成后会显示在右侧。' : ready ? '服务已连接，可以开始核对。' : state.config?.localSetup ? '本机中转已启动。请点击右上角“本机设置”，配置此场景的应用 API Key。' : '分析服务尚未连接。连接后即可提交文件与问题。';
 }
 function setFile(file) {
   if (state.busy) return;
@@ -142,5 +142,6 @@ try {
   if (!response.ok) throw new Error('config');
   state.config = await response.json(); if (!state.config.scenarios) throw new Error('config');
   $('#access-field').hidden = !state.config.accessCodeRequired;
+  $('#local-settings').hidden = !state.config.localSetup;
 } catch { state.config = null; }
 availability();
