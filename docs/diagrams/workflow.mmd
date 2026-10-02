@@ -1,0 +1,113 @@
+flowchart TD
+  subgraph INGEST["① 摄取 · 提取 · 质量门禁"]
+    U1[/"用户输入：文本 / PDF / 截图 / 网页链接"/]
+    F0["_fetch<br/>抓取网页正文"]
+    P1["_parse_multipart<br/>解析上传表单"]
+    E1{{"_extract_document<br/>按内容分流"}}
+    E2["pypdf 提取文字层"]
+    E3["Vision OCR 识别<br/>swift 预编译 · 多页并发"]
+    E4["UTF-8 / GB18030 解码"]
+    Q1["assess_pages<br/>文本质量评估"]
+    QC["ocr_quality_reasons<br/>置信度 · 分辨率门禁"]
+    G1{{"质量门禁<br/>ready / needs_review"}}
+    D1{{"sha256 去重判定"}}
+    S1[("SQLite 持久化<br/>contracts · versions<br/>pages · spans")]
+  end
+
+  subgraph SENSE["② 意图理解 · 立场初筛"]
+    T1["_detect_contract_type<br/>四类规则包识别"]
+    SG1["_question_suggestions<br/>全规则包候选池"]
+    SG2{{"Jev 判断 API<br/>已配置 key ?"}}
+    SG3["Jev 相关度打分"]
+    SG4["关键词命中排序<br/>泛词封顶 · 包级信号"]
+    SC1["_deterministic_screen_row<br/>有利 / 不利 / 中性初筛"]
+  end
+
+  subgraph ALIGN["③ 法律检索 · 意图对齐（零 LLM）"]
+    L1["_legal_query_from_task<br/>问题关键词归一"]
+    L2["_tokenize<br/>中文 bigram 切分"]
+    L3["SYNONYMS<br/>口语同义扩展"]
+    L4["IDF 打分 + 命中门槛<br/>≥2 bigram 或完整词"]
+    L5["_normalize_intent<br/>金额 · 期限 · 条件 · 例外"]
+    L6{{"_align 对齐分类<br/>matched / ambiguous / not_found"}}
+    CORPUS[("legal_corpus.jsonl<br/>114 条 · 版本哈希")]
+  end
+
+  subgraph EVID["④ 证据契约 · 风险分级"]
+    R1["_finding<br/>规则包确定性抽取"]
+    R2["_attach_finding_evidence<br/>挂接原文 span 引用"]
+    R3["_finding_severity<br/>高 / 中 / 低风险启发式"]
+    R4{{"_validate_finding_payload<br/>出口统一校验"}}
+    R5["修正枚举 · 剔除空引用"]
+  end
+
+  subgraph GEN["⑤ 受约束双阶段生成（LLM Router）"]
+    GA1["grounded 上下文组装<br/>evidence · provisions · findings"]
+    RT1{{"LLMRouter<br/>glm-5.3-flash 主链路"}}
+    RT2["glm-4-flash 备用链路"]
+    A1["Stage A<br/>证据摘要 · 风险 · 法条引用"]
+    VA1{{"validate_generated_json<br/>剔除越界引用"}}
+    B1["Stage B<br/>行动建议 · 协商草稿"]
+    VB1{{"validate_staged_drafts"}}
+    FB["降级：保留 Stage A<br/>确定性结果不受损"]
+  end
+
+  O0["首页 · 猜你想问"]
+  NR["needs_review<br/>阻断确定性结论"]
+  O1["分析页 · 专业解答<br/>风险徽章 · 法条标签"]
+  O2["协商工坊<br/>GLM 证据草稿 · 可编辑"]
+
+  U1 --> P1
+  U1 -. "URL" .-> F0
+  F0 --> E1
+  P1 --> E1
+  E1 -->|"可检索 PDF"| E2
+  E1 -->|"扫描件 · 截图"| E3
+  E1 -->|"纯文本"| E4
+  E2 --> Q1
+  E3 --> QC
+  E4 --> Q1
+  QC --> G1
+  Q1 --> G1
+  G1 -->|"ready"| D1
+  G1 -->|"needs_review"| NR
+  D1 -->|"新文档"| S1
+  D1 -->|"重复"| S1
+  S1 --> T1
+  S1 --> SC1
+  S1 --> L1
+  S1 --> R1
+  T1 --> SG1
+  SG1 --> SG2
+  SG2 -->|"有 key"| SG3
+  SG2 -->|"无 key"| SG4
+  SG3 --> O0
+  SG4 --> O0
+  L1 --> L2
+  L2 --> L3
+  L3 --> L4
+  CORPUS --> L4
+  L4 --> L6
+  L5 --> L6
+  R1 --> R2
+  R2 --> R3
+  SC1 --> R3
+  R3 --> R4
+  R4 -->|"非法值"| R5
+  R5 --> GA1
+  R4 -->|"通过"| GA1
+  L6 --> GA1
+  GA1 --> RT1
+  RT1 -->|"失败 / 限流"| RT2
+  RT1 --> A1
+  RT2 --> A1
+  A1 --> VA1
+  VA1 -->|"校验失败"| FB
+  VA1 -->|"通过"| B1
+  B1 --> VB1
+  VB1 -->|"通过"| O2
+  VB1 -->|"失败"| FB
+  A1 --> O1
+  FB --> O1
+  NR --> O1
+  O1 --> O2

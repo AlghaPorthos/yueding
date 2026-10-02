@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3788.497 816.8025" width="3788.497" height="816.8025" style="--bg:#1a1b26;--fg:#a9b1d6;--line:#3d59a1;--accent:#7aa2f7;--muted:#565f89;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+<g class="subgraph" data-id="SRC" data-label="输入源">
+  <rect x="40" y="237.91916666666668" width="168.05700000000002" height="274.5" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="40" y="237.91916666666668" width="168.05700000000002" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="52" y="251.91916666666668" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">输入源</text>
+</g>
+<g class="subgraph" data-id="EXT" data-label="提取与结构化">
+  <rect x="268.057" y="267.96083333333337" width="625.832" height="223.11666666666667" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="268.057" y="267.96083333333337" width="625.832" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="280.057" y="281.96083333333337" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">提取与结构化</text>
+</g>
+<g class="subgraph" data-id="STORE" data-label="持久化（SQLite）">
+  <rect x="2838.573" y="265.8025" width="250.59599999999998" height="511.00000000000006" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="2838.573" y="265.8025" width="250.59599999999998" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="2850.573" y="279.8025" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">持久化（SQLite）</text>
+</g>
+<g class="subgraph" data-id="RET" data-label="检索与对齐">
+  <rect x="965.889" y="193.72750000000005" width="908.1329999999999" height="390.09999999999997" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="965.889" y="193.72750000000005" width="908.1329999999999" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="977.889" y="207.72750000000005" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">检索与对齐</text>
+</g>
+<g class="subgraph" data-id="LLM" data-label="双阶段生成（受证据约束）">
+  <rect x="1958.022" y="263.865" width="796.551" height="135.8" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="1958.022" y="263.865" width="796.551" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="1970.022" y="277.865" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">双阶段生成（受证据约束）</text>
+</g>
+<g class="subgraph" data-id="OUT" data-label="消费端">
+  <rect x="2838.573" y="93.55249999999998" width="909.9239999999999" height="144.25" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="2838.573" y="93.55249999999998" width="909.9239999999999" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="2850.573" y="107.55249999999998" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">消费端</text>
+</g>
+<polyline class="edge" data-from="BYTES" data-to="MP" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="205.76550000000003,315.81916666666666 250.05700000000002,315.81916666666666 250.05700000000002,339.37750000000005 291.0965,339.37750000000005" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="URLIN" data-to="HTML" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="199.83750000000003,477.9691666666667 238.05700000000002,477.9691666666667 238.05700000000002,421.17750000000007 291.0965,421.17750000000007" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="QIN" data-to="QY" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="178.3485,404.61916666666673 250.05700000000002,404.61916666666673 250.05700000000002,501.07750000000004 947.889,501.07750000000004 947.889,559.3775 993.889,559.3775 993.889,555.5275 1033.0795,555.5275" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="SHA" data-to="CDB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="623.0665,330.41083333333336 923.889,330.41083333333336 923.889,40.039999999999964 2820.5729999999994,40.039999999999964 2820.5729999999994,343.7025 2866.5729999999994,343.7025" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PG" data-to="PDB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="623.437,412.21083333333337 647.437,412.21083333333337 647.437,726.9025 2866.573,726.9025" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="SP" data-to="PDB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="877.889,437.1775 955.48425,437.1775 955.48425,726.9025 2866.573,726.9025" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PG" data-to="QY" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="623.437,412.21083333333337 647.437,412.21083333333337 647.437,549.3775 1033.0795,549.3775" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PV" data-to="ADB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1858.022,509.2025000000001 1916.022,509.2025000000001 1916.022,631.1025000000001 2866.573,631.1025000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PG" data-to="INT" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="623.437,412.21083333333337 647.437,412.21083333333337 647.437,273.07750000000004 1033.0795,273.07750000000004" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="INT" data-to="ADB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1198.0355,273.07750000000004 1892.022,273.07750000000004 1892.022,185.1275 2796.573,185.1275 2796.573,514.0024999999999 2866.573,514.0025 2866.573,614.1525 2866.573,614.1525" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PG" data-to="FN" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="623.437,412.21083333333337 647.437,412.21083333333337 647.437,371.77750000000003 1033.0795,371.77750000000003" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="SP" data-to="FN" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="877.889,437.1775 955.48425,437.1775 955.48425,371.77750000000003 1033.0795,371.77750000000003" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="FN" data-to="ADB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1248.4235,371.77750000000003 1611.22275,371.77750000000003 1611.22275,631.1025000000001 2866.573,631.1025000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="FN" data-to="MAT" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1248.4235,371.77750000000003 1611.22275,371.77750000000003 1611.22275,164.4525 2866.573,164.4525" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="FN" data-to="PA" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1248.4235,371.77750000000003 1611.22275,371.77750000000003 1611.22275,345.765 1974.022,345.765" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PV" data-to="PA" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1858.022,509.2025000000001 1916.022,509.2025000000001 1916.022,345.765 1974.022,345.765" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="JA" data-to="LDB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="2380.833,345.76500000000004 2404.833,345.76500000000004 2404.833,535.3025 2866.573,535.3025" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="JB" data-to="LDB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="2738.573,345.765 2802.573,345.765 2802.573,535.3025 2866.573,535.3025" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="JA" data-to="RESP" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="2380.833,345.76500000000004 2404.833,345.76500000000004 2404.833,194.90249999999997 3079.3849999999998,194.90249999999997" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="JB" data-to="RESP" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="2738.573,345.765 2802.573,345.765 2802.573,194.90249999999997 3079.3849999999998,194.90249999999997" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="MP" data-to="PG" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="463.4625,339.37750000000005 483.94275,339.37750000000005 483.94275,412.21083333333337 504.423,412.21083333333337" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="MP" data-to="SHA" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="463.4625,339.37750000000005 483.94275,339.37750000000005 483.94275,330.41083333333336 504.7935,330.41083333333336" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="HTML" data-to="PG" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="435.30449999999996,421.17750000000007 504.423,421.17750000000007" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PG" data-to="SP" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="623.437,412.21083333333337 647.437,412.21083333333337 647.437,437.1775 671.437,437.1775" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="QY" data-to="TK" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1157.2805,549.3775 1257.233,549.3775 1257.233,509.2025 1281.233,509.2025" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CORP" data-to="TK" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1233.233,469.02750000000003 1257.233,469.02750000000003 1257.233,509.2025 1281.233,509.2025" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="TK" data-to="HIT" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1432.1100000000001,509.2025 1480.1100000000001,509.2025" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="HIT" data-to="PV" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1618.3899999999999,509.2025 1666.3899999999999,509.2025000000001" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PA" data-to="JA" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="2170.841,345.765 2218.841,345.765" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="JA" data-to="PB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="2380.833,345.76500000000004 2404.833,345.76500000000004 2404.833,345.765 2428.833,345.765" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="PB" data-to="JB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="2559.703,345.765 2607.703,345.765" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="MAT" data-to="RESP" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="3043.3849999999998,164.4525 3043.3849999999998,164.4525 3043.3849999999998,185.67749999999998 3079.3849999999998,185.67749999999998" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="RESP" data-to="FE" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="3262.125,194.90249999999997 3310.125,194.90249999999997" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="FE" data-to="UI" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="3500.2749999999996,194.90249999999997 3548.2749999999996,194.90249999999997" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<g class="node" data-id="BYTES" data-label="原始文件 bytes
+≤ 5 MB" data-shape="cylinder">
+  <rect x="69.70850000000002" y="288.9191666666667" width="136.05700000000002" height="53.80000000000001" fill="var(--_node-fill)" stroke="none" />
+  <line x1="69.70850000000002" y1="288.9191666666667" x2="69.70850000000002" y2="342.7191666666667" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="205.76550000000003" y1="288.9191666666667" x2="205.76550000000003" y2="342.7191666666667" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="137.73700000000002" cy="342.7191666666667" rx="68.02850000000001" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="137.73700000000002" cy="288.9191666666667" rx="68.02850000000001" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="137.73700000000002" y="315.81916666666666" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="137.73700000000002" dy="-3.9000000000000012">原始文件 bytes</tspan><tspan x="137.73700000000002" dy="16.900000000000002">≤ 5 MB</tspan></text>
+</g>
+<g class="node" data-id="URLIN" data-label="/&quot;URL 字符串&quot;/" data-shape="rectangle">
+  <rect x="69.70850000000002" y="459.5191666666667" width="130.12900000000002" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="134.77300000000002" y="477.9691666666667" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">/&quot;URL 字符串&quot;/</text>
+</g>
+<g class="node" data-id="QIN" data-label="/&quot;用户问题
+≤ 300 字&quot;/" data-shape="rectangle">
+  <rect x="69.70850000000002" y="377.7191666666667" width="108.64" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="124.02850000000001" y="404.6191666666667" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="124.02850000000001" dy="-3.9000000000000012">/&quot;用户问题</tspan><tspan x="124.02850000000001" dy="16.900000000000002">≤ 300 字&quot;/</tspan></text>
+</g>
+<g class="node" data-id="MP" data-label="UploadedFile
+content · content_type" data-shape="rectangle">
+  <rect x="291.0965" y="312.4775000000001" width="172.36599999999999" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="377.2795" y="339.37750000000005" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="377.2795" dy="-3.9000000000000012">UploadedFile</tspan><tspan x="377.2795" dy="16.900000000000002">content · content_type</tspan></text>
+</g>
+<g class="node" data-id="PG" data-label="Page
+number · text" data-shape="rectangle">
+  <rect x="504.423" y="385.3108333333334" width="119.01400000000001" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="563.9300000000001" y="412.21083333333337" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="563.9300000000001" dy="-3.9000000000000012">Page</tspan><tspan x="563.9300000000001" dy="16.900000000000002">number · text</tspan></text>
+</g>
+<g class="node" data-id="SP" data-label="TextSpan
+span_id · start · end · quote" data-shape="rectangle">
+  <rect x="671.437" y="410.27750000000003" width="206.452" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="774.663" y="437.1775" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="774.663" dy="-3.9000000000000012">TextSpan</tspan><tspan x="774.663" dy="16.900000000000002">span_id · start · end · quote</tspan></text>
+</g>
+<g class="node" data-id="SHA" data-label="sha256 摘要" data-shape="rectangle">
+  <rect x="504.7935" y="311.96083333333337" width="118.273" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="563.93" y="330.41083333333336" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">sha256 摘要</text>
+</g>
+<g class="node" data-id="HTML" data-label="正文文本
+script / style 剔除" data-shape="rectangle">
+  <rect x="291.0965" y="394.27750000000003" width="144.208" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="363.2005" y="421.1775" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="363.2005" dy="-3.9000000000000012">正文文本</tspan><tspan x="363.2005" dy="16.900000000000002">script / style 剔除</tspan></text>
+</g>
+<g class="node" data-id="CDB" data-label="contracts
+contract_versions" data-shape="cylinder">
+  <rect x="2866.573" y="316.8025" width="151.618" height="53.80000000000001" fill="var(--_node-fill)" stroke="none" />
+  <line x1="2866.573" y1="316.8025" x2="2866.573" y2="370.6025" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="3018.191" y1="316.8025" x2="3018.191" y2="370.6025" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="2942.382" cy="370.6025" rx="75.809" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="2942.382" cy="316.8025" rx="75.809" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="2942.382" y="343.7025" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="2942.382" dy="-3.9000000000000012">contracts</tspan><tspan x="2942.382" dy="16.900000000000002">contract_versions</tspan></text>
+</g>
+<g class="node" data-id="PDB" data-label="document_pages
+text_spans" data-shape="cylinder">
+  <rect x="2866.573" y="700.0025" width="142.726" height="53.80000000000001" fill="var(--_node-fill)" stroke="none" />
+  <line x1="2866.573" y1="700.0025" x2="2866.573" y2="753.8025" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="3009.299" y1="700.0025" x2="3009.299" y2="753.8025" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="2937.9359999999997" cy="753.8025" rx="71.363" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="2937.9359999999997" cy="700.0025" rx="71.363" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="2937.9359999999997" y="726.9025" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="2937.9359999999997" dy="-3.9000000000000012">document_pages</tspan><tspan x="2937.9359999999997" dy="16.900000000000002">text_spans</tspan></text>
+</g>
+<g class="node" data-id="ADB" data-label="legal_alignments
+intent · index_version" data-shape="cylinder">
+  <rect x="2866.573" y="604.2025000000001" width="170.88399999999996" height="53.80000000000001" fill="var(--_node-fill)" stroke="none" />
+  <line x1="2866.573" y1="604.2025000000001" x2="2866.573" y2="658.0025" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="3037.457" y1="604.2025000000001" x2="3037.457" y2="658.0025" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="2952.015" cy="658.0025" rx="85.44199999999998" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="2952.015" cy="604.2025000000001" rx="85.44199999999998" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="2952.015" y="631.1025000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="2952.015" dy="-3.9000000000000012">legal_alignments</tspan><tspan x="2952.015" dy="16.900000000000002">intent · index_version</tspan></text>
+</g>
+<g class="node" data-id="LDB" data-label="llm_invocations
+provider · model · latency" data-shape="cylinder">
+  <rect x="2866.573" y="508.40250000000003" width="194.59599999999998" height="53.80000000000001" fill="var(--_node-fill)" stroke="none" />
+  <line x1="2866.573" y1="508.40250000000003" x2="2866.573" y2="562.2025000000001" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="3061.169" y1="508.40250000000003" x2="3061.169" y2="562.2025000000001" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="2963.8709999999996" cy="562.2025000000001" rx="97.29799999999999" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="2963.8709999999996" cy="508.40250000000003" rx="97.29799999999999" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="2963.8709999999996" y="535.3025" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="2963.8709999999996" dy="-3.9000000000000012">llm_invocations</tspan><tspan x="2963.8709999999996" dy="16.900000000000002">provider · model · latency</tspan></text>
+</g>
+<g class="node" data-id="AUD" data-label="audit_events
+脱敏元数据" data-shape="cylinder">
+  <rect x="2917.105" y="412.6025" width="117.53200000000001" height="53.80000000000001" fill="var(--_node-fill)" stroke="none" />
+  <line x1="2917.105" y1="412.6025" x2="2917.105" y2="466.40250000000003" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="3034.637" y1="412.6025" x2="3034.637" y2="466.40250000000003" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="2975.871" cy="466.40250000000003" rx="58.766000000000005" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="2975.871" cy="412.6025" rx="58.766000000000005" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="2975.871" y="439.50250000000005" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="2975.871" dy="-3.9000000000000012">audit_events</tspan><tspan x="2975.871" dy="16.900000000000002">脱敏元数据</tspan></text>
+</g>
+<g class="node" data-id="QY" data-label="关键词 query" data-shape="rectangle">
+  <rect x="1033.0795" y="530.9275" width="124.20100000000001" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1095.18" y="549.3775" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">关键词 query</text>
+</g>
+<g class="node" data-id="TK" data-label="token 列表
++ expanded_terms" data-shape="rectangle">
+  <rect x="1281.233" y="482.3025" width="150.877" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1356.6715" y="509.2025" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1356.6715" dy="-3.9000000000000012">token 列表</tspan><tspan x="1356.6715" dy="16.900000000000002">+ expanded_terms</tspan></text>
+</g>
+<g class="node" data-id="HIT" data-label="命中条文 Top-6" data-shape="rectangle">
+  <rect x="1480.1100000000001" y="490.75250000000005" width="138.28" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1549.2500000000002" y="509.20250000000004" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">命中条文 Top-6</text>
+</g>
+<g class="node" data-id="PV" data-label="LegalProvision
+source · article · version
+quote · content_hash" data-shape="rectangle">
+  <rect x="1666.3899999999999" y="473.8525000000001" width="191.63199999999995" height="70.7" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1762.206" y="509.2025000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1762.206" dy="-12.350000000000001">LegalProvision</tspan><tspan x="1762.206" dy="16.900000000000002">source · article · version</tspan><tspan x="1762.206" dy="16.900000000000002">quote · content_hash</tspan></text>
+</g>
+<g class="node" data-id="CORP" data-label="legal_corpus.jsonl
+114 条" data-shape="cylinder">
+  <rect x="1081.615" y="442.12750000000005" width="151.618" height="53.80000000000001" fill="var(--_node-fill)" stroke="none" />
+  <line x1="1081.615" y1="442.12750000000005" x2="1081.615" y2="495.92750000000007" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="1233.233" y1="442.12750000000005" x2="1233.233" y2="495.92750000000007" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="1157.424" cy="495.92750000000007" rx="75.809" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="1157.424" cy="442.12750000000005" rx="75.809" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1157.424" y="469.02750000000003" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1157.424" dy="-3.9000000000000012">legal_corpus.jsonl</tspan><tspan x="1157.424" dy="16.900000000000002">114 条</tspan></text>
+</g>
+<g class="node" data-id="INT" data-label="intent JSON
+amount · duration
+condition · exception" data-shape="rectangle">
+  <rect x="1033.0795" y="237.72750000000005" width="164.95600000000002" height="70.7" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1115.5575000000001" y="273.07750000000004" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1115.5575000000001" dy="-12.350000000000001">intent JSON</tspan><tspan x="1115.5575000000001" dy="16.900000000000002">amount · duration</tspan><tspan x="1115.5575000000001" dy="16.900000000000002">condition · exception</tspan></text>
+</g>
+<g class="node" data-id="FN" data-label="Finding
+type · status · severity
+consequences · provenance" data-shape="rectangle">
+  <rect x="1033.0795" y="336.4275" width="215.344" height="70.7" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="1140.7515" y="371.77750000000003" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="1140.7515" dy="-12.350000000000001">Finding</tspan><tspan x="1140.7515" dy="16.900000000000002">type · status · severity</tspan><tspan x="1140.7515" dy="16.900000000000002">consequences · provenance</tspan></text>
+</g>
+<g class="node" data-id="PA" data-label="Stage A Prompt
+slim evidence · provisions" data-shape="rectangle">
+  <rect x="1974.022" y="318.865" width="196.81899999999996" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="2072.4314999999997" y="345.765" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="2072.4314999999997" dy="-3.9000000000000012">Stage A Prompt</tspan><tspan x="2072.4314999999997" dy="16.900000000000002">slim evidence · provisions</tspan></text>
+</g>
+<g class="node" data-id="JA" data-label="JSON
+summary · severity
+legal_refs · citations" data-shape="rectangle">
+  <rect x="2218.841" y="310.415" width="161.99200000000002" height="70.7" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="2299.837" y="345.76500000000004" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="2299.837" dy="-12.350000000000001">JSON</tspan><tspan x="2299.837" dy="16.900000000000002">summary · severity</tspan><tspan x="2299.837" dy="16.900000000000002">legal_refs · citations</tspan></text>
+</g>
+<g class="node" data-id="PB" data-label="Stage B Prompt
++ Stage A 结论" data-shape="rectangle">
+  <rect x="2428.833" y="318.865" width="130.87" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="2494.268" y="345.765" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="2494.268" dy="-3.9000000000000012">Stage B Prompt</tspan><tspan x="2494.268" dy="16.900000000000002">+ Stage A 结论</tspan></text>
+</g>
+<g class="node" data-id="JB" data-label="JSON
+actions · drafts" data-shape="rectangle">
+  <rect x="2607.703" y="318.865" width="130.87" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="2673.138" y="345.765" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="2673.138" dy="-3.9000000000000012">JSON</tspan><tspan x="2673.138" dy="16.900000000000002">actions · drafts</tspan></text>
+</g>
+<g class="node" data-id="MAT" data-label="/matters 投影
+facts · issues · actions" data-shape="rectangle">
+  <rect x="2866.573" y="137.55249999999998" width="176.81199999999998" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="2954.979" y="164.4525" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="2954.979" dy="-3.9000000000000012">/matters 投影</tspan><tspan x="2954.979" dy="16.900000000000002">facts · issues · actions</tspan></text>
+</g>
+<g class="node" data-id="RESP" data-label="analyze / generate 响应" data-shape="rectangle">
+  <rect x="3079.3849999999998" y="176.4525" width="182.73999999999998" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="3170.7549999999997" y="194.90249999999997" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">analyze / generate 响应</text>
+</g>
+<g class="node" data-id="FE" data-label="前端 state
+findings · answer · drafts" data-shape="rectangle">
+  <rect x="3310.125" y="168.0025" width="190.14999999999995" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="3405.2" y="194.9025" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="3405.2" dy="-3.9000000000000012">前端 state</tspan><tspan x="3405.2" dy="16.900000000000002">findings · answer · drafts</tspan></text>
+</g>
+<g class="node" data-id="UI" data-label="分析页 · 工坊 · 移动端" data-shape="rectangle">
+  <rect x="3548.2749999999996" y="176.4525" width="184.22199999999998" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="3640.3859999999995" y="194.90249999999997" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">分析页 · 工坊 · 移动端</text>
+</g>
+</svg>

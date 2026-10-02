@@ -1,0 +1,83 @@
+flowchart LR
+  subgraph SRC["输入源"]
+    BYTES[("原始文件 bytes<br/>≤ 5 MB")]
+    URLIN[/"URL 字符串"/]
+    QIN[/"用户问题<br/>≤ 300 字"/]
+  end
+
+  subgraph EXT["提取与结构化"]
+    MP["UploadedFile<br/>content · content_type"]
+    PG["Page<br/>number · text"]
+    SP["TextSpan<br/>span_id · start · end · quote"]
+    SHA["sha256 摘要"]
+    HTML["正文文本<br/>script / style 剔除"]
+  end
+
+  subgraph STORE["持久化（SQLite）"]
+    CDB[("contracts<br/>contract_versions")]
+    PDB[("document_pages<br/>text_spans")]
+    ADB[("legal_alignments<br/>intent · index_version")]
+    LDB[("llm_invocations<br/>provider · model · latency")]
+    AUD[("audit_events<br/>脱敏元数据")]
+  end
+
+  subgraph RET["检索与对齐"]
+    QY["关键词 query"]
+    TK["token 列表<br/>+ expanded_terms"]
+    HIT["命中条文 Top-6"]
+    PV["LegalProvision<br/>source · article · version<br/>quote · content_hash"]
+    CORP[("legal_corpus.jsonl<br/>114 条")]
+    INT["intent JSON<br/>amount · duration<br/>condition · exception"]
+    FN["Finding<br/>type · status · severity<br/>consequences · provenance"]
+  end
+
+  subgraph LLM["双阶段生成（受证据约束）"]
+    PA["Stage A Prompt<br/>slim evidence · provisions"]
+    JA["JSON<br/>summary · severity<br/>legal_refs · citations"]
+    PB["Stage B Prompt<br/>+ Stage A 结论"]
+    JB["JSON<br/>actions · drafts"]
+  end
+
+  subgraph OUT["消费端"]
+    MAT["/matters 投影<br/>facts · issues · actions"]
+    RESP["analyze / generate 响应"]
+    FE["前端 state<br/>findings · answer · drafts"]
+    UI["分析页 · 工坊 · 移动端"]
+  end
+
+  BYTES --> MP
+  URLIN --> HTML
+  QIN --> QY
+  MP --> PG
+  MP --> SHA
+  HTML --> PG
+  PG --> SP
+  SHA --> CDB
+  PG --> PDB
+  SP --> PDB
+  PG --> QY
+  QY --> TK
+  CORP --> TK
+  TK --> HIT
+  HIT --> PV
+  PV --> ADB
+  PG --> INT
+  INT --> ADB
+  PG --> FN
+  SP --> FN
+  FN --> ADB
+  FN --> MAT
+  FN --> PA
+  PV --> PA
+  PA --> JA
+  JA --> LDB
+  JA --> PB
+  PB --> JB
+  JB --> LDB
+  JA --> RESP
+  JB --> RESP
+  MAT --> RESP
+  RESP --> FE
+  FE --> UI
+  MP -.审计.-> AUD
+  JA -.审计.-> LDB
