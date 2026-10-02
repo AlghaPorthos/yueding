@@ -9,10 +9,10 @@
 | 阶段 | 完成度 | 当前判断 |
 | --- | ---: | --- |
 | Phase 0 MVP | 90% | 上传、页级文本、四类租房条款、行动卡片、引用和基础 API 已有；缺少 3 份样本、约 20 个标注点的正式回归集。 |
-| Phase 1 文档/OCR 质量 | 30% | 已有 MIME/大小校验、SHA-256 去重、质量状态、质量原因和分析阻断；没有真实 OCR、扫描 PDF、分辨率/方向/表格处理和 OCR 置信度。 |
-| Phase 2 法律检索/对齐 | 60% | 已有三来源可溯源语料（条例 50 + 民法典租赁章 25 + 示范文书 20，共 95 条，manifest 溯源与内容哈希由质量门禁测试钉死）、确定性检索与对齐、索引缓存按文件变更重建、角色视角条文重排、法律版本漂移重校验；缺少 FTS/BM25、同义词/正则、完整意图归一（金额/期限/条件/例外）和带回放的原子索引版本。 |
+| Phase 1 文档/OCR 质量 | 70% | 已有 MIME/大小校验、SHA-256 去重、质量状态、质量原因和分析阻断；**macOS Vision OCR 已落地**：图片与无文字层扫描 PDF 走本地 Vision 识别（swift 预编译二进制 + 多页并发，3 页热调用 <1s），OCR 结果进入质量评估；新增 `/v1/fetch` 网页正文抓取入库。仍缺分辨率/方向/表格专项处理和 OCR 置信度。 |
+| Phase 2 法律检索/对齐 | 65% | 三来源可溯源语料、确定性对齐、索引缓存、角色视角重排、法律版本漂移重校验；**检索已升级中文 bigram + IDF**（整句自然语言可命中）；缺同义词/正则、完整意图归一和带回放的原子索引版本。 |
 | Phase 3 证据契约 | 52% | `/matters` 已按输入输出协议投影 `extracted_facts/issues/missing_items/actions/drafts`，引用重校验（quote ⊆ 页文本、(source,article,version) ∈ 语料）失败即降级，区分 `supported/user_only/unknown`；Finding 仍缺 `severity/consequences` 字段和统一 schema 校验。 |
-| Phase 4 受约束 LLM | 63% | 已有 provider、fallback、超时、预算、JSON 校验、引用约束和失败保留确定性结果；Jev 判定作为对齐保守慢路径（无键/超时/错误回退确定性）；缺少分阶段生成链路、生产认证、敏感信息检查和完整草稿生成流程。 |
+| Phase 4 受约束 LLM | 70% | provider、fallback、超时、预算、JSON 校验、引用约束、失败保留确定性结果；**快速小模型主链路已接**（glm-5.3-flash via coding plan Anthropic 端点，thinking 禁用 ~10s；备 glm-4-flash），`/generate` 注入法律语料上下文并回传经校验的 `legal_refs`；**「猜你想问」跨规则包候选池**（Jev 打分可选、关键词确定性兜底）。缺分阶段生成链路和生产认证。 |
 | Phase 5 生命周期 | 50% | 已有用户/工作区/角色、提醒、清单、草稿版本和证据记录；缺少注册登录、合同列表、版本比较、删除/导出、审阅状态、回滚和提醒渠道。 |
 | Phase 6 异步可靠性 | 55% | 已有任务表、幂等键、attempt、租约、重试、恢复和事件；没有真实 worker/queue 接入，上传、解析和 LLM 尚未自动进入任务链路。 |
 | Phase 7 权限/隐私/审计/成本 | 35% | 有工作区访问控制、部分审计脱敏、provider 预算和指标；缺少加密、TLS、密钥轮换、对象存储授权、完整 PII 脱敏、保留/硬删除/导出和熔断。 |
@@ -21,7 +21,8 @@
 
 ## 已实现能力
 
-- **文档摄取和引用**：支持 UTF-8 文本、可检索 PDF 和图片入口；保存合同、版本、页级文本、字符 span、SHA-256、质量状态、质量原因和质量指标。图片或质量不足的文档返回 `needs_review`，不会生成确定性合同结论。
+- **文档摄取和引用**：支持 UTF-8 文本、可检索 PDF、图片 OCR 与扫描 PDF OCR、网页正文抓取（`/v1/fetch`，≤2MB，复用上传管线的去重/审计/质量评估）；保存合同、版本、页级文本、字符 span、SHA-256、质量状态、质量原因和质量指标。质量不足的文档返回 `needs_review`，不会生成确定性合同结论。
+- **OCR（macOS Vision）**：`app/macos_ocr.swift` 以 PDFKit 逐页渲染 + Vision 识别，多页并发（≤4 在飞）；`app/ocr.py` 首次使用时用 swiftc 预编译原生二进制（`backend/.build/`，已 gitignore）并按源码 mtime 失效重编——3 页扫描 PDF 热调用约 0.8s，单图约 0.5s。
 - **Phase 0 条款卡片**：对押金、房屋改动、维修、提前退租四类租房条款执行确定性抽取；结果带页码、span 和原文引用，并区分 `confirmed`、`not_found` 和待复核状态。
 - **法律检索和对齐骨架**：从 JSONL 加载来源、条文号、版本、生效期和内容 hash，执行确定性短语检索；`/v1/contracts/{contract_id}/versions/{version_id}/align` 保存 `matched`、`ambiguous` 或 `not_found` 结果及匹配理由。当前 `backend/data/legal_corpus.jsonl` 有 95 条记录、3 个来源（住房租赁条例 50、民法典租赁合同章 25、市场监管总局示范文书 20），manifest 溯源与内容哈希由 `tests/test_corpus_quality.py` 门禁钉死，语料写盘原子化；仍不能视为完整法律资料包或法律意见来源。
 - **角色感知对齐与协议投影**：`/align` 接受可选 `user_role`（承租人/出租人），对 confirmed 条款按角色标记词稳定重排条文（溯源字段不变）；`/matters` 将 findings 与 alignments 确定性投影为输入输出协议 output（`extracted_facts/issues/missing_items/actions/drafts`），引用与法律版本重校验失败即降级为 `user_only`，不伪造法律结论。

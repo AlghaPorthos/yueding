@@ -14,9 +14,12 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from email.parser import BytesParser
 from email.policy import default
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Callable, Iterable
 from urllib.parse import parse_qs, urlsplit
+import urllib.error
+import urllib.request
 
 from .db import apply_migrations, connect
 from .legal import LegalIndex
@@ -1099,6 +1102,55 @@ def _job_not_found(job_id: str) -> ContractError:
     return ContractError("job_not_found", "任务不存在", 404)
 
 
+class _HTMLTextExtractor(HTMLParser):
+    """抽取网页可见正文：跳过脚本/样式，块级标签断行。"""
+
+    _SKIP = {"script", "style", "noscript", "template", "svg"}
+    _BLOCK = {"p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6",
+              "section", "article", "blockquote", "td", "th", "dd", "dt", "ul", "ol", "table"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.skip_depth = 0
+        self.in_title = False
+        self.title = ""
+        self.chunks: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        del attrs
+        if tag in self._SKIP:
+            self.skip_depth += 1
+        elif tag == "title":
+            self.in_title = True
+        elif tag in self._BLOCK:
+            self.chunks.append("\n")
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self._SKIP and self.skip_depth:
+            self.skip_depth -= 1
+        elif tag == "title":
+            self.in_title = False
+        elif tag in self._BLOCK:
+            self.chunks.append("\n")
+
+    def handle_data(self, data: str) -> None:
+        if self.in_title:
+            self.title += data
+        elif self.skip_depth == 0 and data.strip():
+            self.chunks.append(data)
+
+
+def _extract_html_text(html: str) -> tuple[str, str]:
+    parser = _HTMLTextExtractor()
+    try:
+        parser.feed(html)
+    except Exception:  # 容错截断的 HTML
+        pass
+    collapsed = re.sub(r"[ \t\r\f\v]+", " ", "".join(parser.chunks))
+    body = "\n".join(line.strip() for line in collapsed.split("\n") if line.strip())
+    return body, parser.title.strip()
+
+
 class ContractApplication:
     """A tiny WSGI/ASGI-compatible application with no runtime dependencies."""
 
@@ -1297,6 +1349,8 @@ class ContractApplication:
             if len(text) < 15:
                 raise ContractError("invalid_request", "请求字段 text 无效")
             return _question_suggestions(text[:50000]), 200
+        if method == "POST" and route_path == "/v1/fetch":
+            return self._fetch(headers, body)
         if method == "POST" and route_path == "/v1/users":
             return self._create_user(headers, body), 201
         if method == "POST" and route_path == "/v1/workspaces":
@@ -1687,6 +1741,57 @@ class ContractApplication:
             self._assert_workspace_member(db, user_id, workspace_id)
             rows = db.execute("SELECT * FROM draft_versions WHERE contract_id = ? ORDER BY version_number DESC", (contract_id,)).fetchall()
         return {"contract_id": contract_id, "drafts": [self._draft_payload(row) for row in rows]}
+
+    MAX_FETCH_BYTES = 2 * 1024 * 1024
+
+    def _fetch(self, headers: dict[str, str], body: bytes) -> tuple[dict[str, Any], int]:
+        """抓取网页正文并按文本合同入库，复用上传管线的去重/审计/质量评估。"""
+        payload = _parse_json_body(headers, body)
+        url = str(payload.get("url") or "").strip()
+        if not url:
+            raise ContractError("invalid_request", "请求字段 url 无效")
+        parts = urlsplit(url)
+        if parts.scheme not in {"http", "https"} or not parts.hostname:
+            raise ContractError("invalid_request", "仅支持 http/https 链接")
+        request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; YuedingReader/1.0)"})
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                raw = response.read(self.MAX_FETCH_BYTES + 1)
+                content_type = response.headers.get("Content-Type", "")
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            raise ContractError("fetch_failed", "网页获取失败，请检查链接或稍后再试") from exc
+        if len(raw) > self.MAX_FETCH_BYTES:
+            raise ContractError("fetch_failed", "网页超过 2 MB，请复制正文到文本框")
+        charset_match = re.search(r"charset=([\w-]+)", content_type, re.I)
+        html = None
+        for encoding in [charset_match.group(1) if charset_match else None, "utf-8", "gb18030"]:
+            if not encoding:
+                continue
+            try:
+                html = raw.decode(encoding)
+                break
+            except (UnicodeDecodeError, LookupError):
+                continue
+        if html is None:
+            html = raw.decode("utf-8", errors="replace")
+        if "html" in content_type.lower() or "<html" in html[:2000].lower():
+            text, title = _extract_html_text(html)
+        else:
+            text, title = html, ""
+        if len(text.strip()) < 15:
+            raise ContractError("parse_failed", "网页中没有可分析的正文文本")
+        boundary = "yuedingfetch" + uuid.uuid4().hex
+        name = (title or parts.hostname)[:60]
+        body_bytes = (
+            f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="webpage.txt"\r\n'
+            f"Content-Type: text/plain; charset=utf-8\r\n\r\n".encode()
+            + text.encode("utf-8")
+            + f'\r\n--{boundary}\r\nContent-Disposition: form-data; name="name"\r\n\r\n{name}\r\n--{boundary}--\r\n'.encode()
+        )
+        fake_headers = {**headers, "Content-Type": f"multipart/form-data; boundary={boundary}"}
+        result, status = self._upload(fake_headers, body_bytes, new_contract_path=False)
+        result["source_url"] = url
+        return result, status
 
     def _upload(self, headers: dict[str, str], body: bytes, *, new_contract_path: bool) -> tuple[dict[str, Any], int]:
         if len(body) > MAX_BYTES + 1024 * 32:
