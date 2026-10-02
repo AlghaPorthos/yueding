@@ -6,6 +6,10 @@
 
 **在线体验（GitHub Pages）**：<https://alghaporthos.github.io/yueding/>
 
+## 独立演示页
+
+[`demo.html`](demo.html) 集中展示租房、入职和应用权限三个虚构场景，包含原文节选、行动卡及各自的 agentic workflow。每个场景都可跳转至已发布的 Dify 工作流实际运行。演示页为独立 HTML 文件，可直接在浏览器打开；页面中的示例内容不调用模型，也不会上传材料。当前 GitHub Pages 从 `main` 分支构建，需将此页合入 `main` 或更改 Pages 构建源后才会出现在现有站点。
+
 ## 快速开始
 
 - **在线**：直接打开上面的 GitHub Pages 地址。
@@ -13,6 +17,7 @@
 
 ```
 index.html   网站入口
+demo.html    独立演示页
 style.css    页面样式
 app.js       交互逻辑 + Multi-Agent 接入层（AgentBridge）
 使用说明.txt 离线分享版说明
