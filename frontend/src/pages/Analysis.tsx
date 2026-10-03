@@ -847,8 +847,15 @@ export default function Analysis() {
                 </Alert>
               )}
 
-              {loading ? (
+              {loading || state.demoAnalyzing ? (
                 <div className="space-y-3">
+                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span
+                      aria-hidden
+                      className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent"
+                    />
+                    正在定位相关条款并生成答案…
+                  </p>
                   <Skeleton className="h-24 w-full" />
                   <Skeleton className="h-24 w-full" />
                   <Skeleton className="h-40 w-full" />

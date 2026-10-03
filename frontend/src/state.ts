@@ -87,8 +87,11 @@ export interface AppState {
   legalScope: string
   kbShowAll: boolean
    backend: BackendState
-  history: ContractDoc[]
-  drafts: DraftState
+   history: ContractDoc[]
+   drafts: DraftState
+   // 模板库演示回放：demoRunning 盖住整页交互；demoAnalyzing 是分析页的回答加载阶段
+   demoRunning: boolean
+   demoAnalyzing: boolean
  }
 
 export interface AppApi {
@@ -147,6 +150,8 @@ export function createInitialState(): AppState {
     backend: { contractId: null, versionId: null, qualityStatus: null, qualityReasons: [], pages: [] },
     history: [],
     drafts: { message: '', alternative: '', supplement: '' },
+    demoRunning: false,
+    demoAnalyzing: false,
   }
 }
 

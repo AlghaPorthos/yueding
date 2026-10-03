@@ -146,8 +146,16 @@ export default function App() {
   const [state, setState] = useState<AppState>(createInitialState)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const toastTimer = useRef<number>(0)
+  const demoTimers = useRef<number[]>([])
+  const demoRunRef = useRef(false)
 
-  useEffect(() => () => window.clearTimeout(toastTimer.current), [])
+  useEffect(
+    () => () => {
+      window.clearTimeout(toastTimer.current)
+      demoTimers.current.forEach((t) => window.clearTimeout(t))
+    },
+    [],
+  )
 
   const notify = useCallback((message: string) => {
     setToastMsg(message)
@@ -207,6 +215,95 @@ export default function App() {
       history: prev.history.some((x) => x.name === sample.name) ? prev.history : [...prev.history, doc],
     }))
     window.scrollTo(0, 0)
+  }, [])
+
+  // 模板库演示回放：用真实主页 UI 复刻「拖入文件 → 停顿 → 生成猜你想问 → 选中 → 开始分析 → 生成答案」
+  // 全程 demoRunning 盖住交互，结束后停留在正常的分析页。
+  const simulateTemplate = useCallback(
+    (key: ExampleKey) => {
+      if (demoRunRef.current) return
+      demoRunRef.current = true
+      demoTimers.current.forEach((t) => window.clearTimeout(t))
+      demoTimers.current = []
+      const sample = examples[key]
+      const pool = localQuestionSuggestions(sample.clauses.join('\n')).filter((q) => q !== sample.question)
+      const suggestions = [sample.question, ...pool].filter(Boolean).slice(0, 3)
+      const question = suggestions[0]
+      const demoFile = new File([sample.clauses.join('\n')], `${sample.name}（演示）.pdf`, {
+        type: 'application/pdf',
+      })
+      const pendingUpload: UploadResult = {
+        contract_id: '',
+        version_id: '',
+        quality_status: 'ok',
+        quality_reasons: [],
+        pages: sample.clauses,
+      }
+      const at = (ms: number, fn: () => void) => {
+        demoTimers.current.push(window.setTimeout(fn, ms))
+      }
+
+      // 1. 回到主页的 PDF 标签，清空上次导入痕迹
+      setState((prev) => ({
+        ...prev,
+        page: 'home',
+        tab: 'pdf',
+        demoRunning: true,
+        demoAnalyzing: false,
+        file: null,
+        pendingUpload: null,
+        fileText: '',
+        homeSuggested: [],
+        homeSuggestionSource: 'jev-demo',
+        question: '',
+      }))
+      window.scrollTo(0, 0)
+      notify('示例演示开始')
+
+      // 2. 拖入文件：先出现文件名（解析中）
+      at(900, () => setState((prev) => ({ ...prev, file: demoFile })))
+      // 3. 解析完成：已解析 N 页 + 预览，停顿后生成猜你想问
+      at(2400, () => {
+        setState((prev) => ({ ...prev, pendingUpload, fileText: sample.clauses.join('\n') }))
+        notify(`已解析 ${pendingUpload.pages.length} 页，正在生成猜你想问…`)
+      })
+      // 4. 猜你想问逐条出现
+      at(3500, () => setState((prev) => ({ ...prev, homeSuggested: suggestions.slice(0, 1) })))
+      at(3880, () => setState((prev) => ({ ...prev, homeSuggested: suggestions.slice(0, 2) })))
+      at(4260, () => setState((prev) => ({ ...prev, homeSuggested: suggestions })))
+      // 5. 选中一条，填入问题框
+      at(5100, () => {
+        setState((prev) => ({ ...prev, question }))
+        notify('已填入你的问题')
+      })
+      // 6. 开始分析：进入分析页的回答加载界面
+      at(5900, () => {
+        chooseSample(key, { question, suggestions })
+        setState((prev) => ({ ...prev, demoAnalyzing: true }))
+        notify('正在生成答案…')
+      })
+      // 7. 答案生成完毕，撤掉演示遮罩
+      at(7900, () => {
+        setState((prev) => ({ ...prev, demoAnalyzing: false, demoRunning: false }))
+        demoRunRef.current = false
+      })
+    },
+    [notify, chooseSample],
+  )
+
+  const cancelDemo = useCallback(() => {
+    demoTimers.current.forEach((t) => window.clearTimeout(t))
+    demoTimers.current = []
+    demoRunRef.current = false
+    setState((prev) => ({
+      ...prev,
+      demoRunning: false,
+      demoAnalyzing: false,
+      file: null,
+      pendingUpload: null,
+      fileText: '',
+      homeSuggested: [],
+    }))
   }, [])
 
   // app.js startAnalysis 文本分支：本地先出结果，后端可用时再上传换取确定性分析
@@ -343,10 +440,28 @@ export default function App() {
           {state.page === 'analysis' ? <Analysis /> : null}
           {state.page === 'workshop' ? <Workshop /> : null}
           {state.page === 'contracts' ? <Contracts /> : null}
-          {state.page === 'templates' ? <Templates onChooseSample={chooseSample} /> : null}
+          {state.page === 'templates' ? <Templates onChooseSample={simulateTemplate} /> : null}
           {state.page === 'legal' ? <Legal /> : null}
           {state.page === 'help' ? <Help /> : null}
         </main>
+        {state.demoRunning ? (
+          <div className="fixed inset-0 z-[60]" role="presentation" aria-label="示例演示进行中">
+            <div className="absolute top-4 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full border bg-background/95 px-4 py-2 shadow-lg backdrop-blur">
+              <span
+                aria-hidden
+                className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent"
+              />
+              <span className="text-sm">示例演示进行中</span>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground underline hover:text-foreground"
+                onClick={cancelDemo}
+              >
+                取消演示
+              </button>
+            </div>
+          </div>
+        ) : null}
         {toastMsg ? (
           <div
             role="status"
