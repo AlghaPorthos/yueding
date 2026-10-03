@@ -5,6 +5,7 @@ import {
   AppContext,
   backendClient,
   createInitialState,
+  localQuestionSuggestions,
   questionFocusTypes,
 } from './state'
 import type { AppApi, AppState, BackendState, ContractDoc, Page } from './state'
@@ -167,9 +168,19 @@ export default function App() {
     [notify],
   )
 
-  // app.js chooseSample：示例直接进入分析，不经过后端
-  const chooseSample = useCallback((key: ExampleKey) => {
+  // app.js chooseSample：示例直接进入分析，不经过后端。
+  // 模板库仿真流程会把自动选中的问题与建议列表传入；其他入口用本地规则生成建议，
+  // 让分析页与真实上传链路一样展示「猜你想问」。
+  const chooseSample = useCallback((key: ExampleKey, opts?: { question?: string; suggestions?: string[] }) => {
     const sample = examples[key]
+    const question = opts?.question || sample.question
+    const suggestions = (
+      opts?.suggestions?.length
+        ? opts.suggestions
+        : [sample.question, ...localQuestionSuggestions(sample.clauses.join('\n')).filter((q) => q !== sample.question)]
+    )
+      .filter(Boolean)
+      .slice(0, 3)
     const doc: ContractDoc = { ...sample, clauses: [...sample.clauses], isSample: true }
     setState((prev) => ({
       ...prev,
@@ -182,7 +193,7 @@ export default function App() {
       backend: EMPTY_BACKEND,
       screen: null,
       doc,
-      question: sample.question,
+      question,
       goal: sample.goal,
       selected: key === 'rental' ? 2 : 1,
       workTab: 'message',
@@ -190,8 +201,8 @@ export default function App() {
       answer: null,
       answerQuestion: '',
       findings: null,
-      focusTypes: questionFocusTypes(sample.question),
-      suggestedQuestions: [],
+      focusTypes: questionFocusTypes(question),
+      suggestedQuestions: suggestions.map((q) => ({ question: q })),
       drafts: EMPTY_DRAFTS,
       history: prev.history.some((x) => x.name === sample.name) ? prev.history : [...prev.history, doc],
     }))
