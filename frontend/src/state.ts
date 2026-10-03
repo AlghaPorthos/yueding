@@ -89,9 +89,10 @@ export interface AppState {
    backend: BackendState
    history: ContractDoc[]
    drafts: DraftState
-   // 模板库演示回放：demoRunning 盖住整页交互；demoAnalyzing 是分析页的回答加载阶段
+   // 模板库演示回放：demoRunning 盖住整页交互；demoAnalyzing 是分析页加载阶段，demoDeep 区分深度解读文案
    demoRunning: boolean
    demoAnalyzing: boolean
+   demoDeep: boolean
  }
 
 export interface AppApi {
@@ -152,6 +153,7 @@ export function createInitialState(): AppState {
     drafts: { message: '', alternative: '', supplement: '' },
     demoRunning: false,
     demoAnalyzing: false,
+    demoDeep: false,
   }
 }
 

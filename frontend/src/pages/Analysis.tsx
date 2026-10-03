@@ -854,7 +854,7 @@ export default function Analysis() {
                       aria-hidden
                       className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent"
                     />
-                    正在定位相关条款并生成答案…
+                    {state.demoDeep ? '正在生成深度分析与协商拟写…' : '正在定位相关条款并生成答案…'}
                   </p>
                   <Skeleton className="h-24 w-full" />
                   <Skeleton className="h-24 w-full" />

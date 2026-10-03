@@ -250,6 +250,7 @@ export default function App() {
         tab: 'pdf',
         demoRunning: true,
         demoAnalyzing: false,
+        demoDeep: false,
         file: null,
         pendingUpload: null,
         fileText: '',
@@ -282,9 +283,37 @@ export default function App() {
         setState((prev) => ({ ...prev, demoAnalyzing: true }))
         notify('正在生成答案…')
       })
-      // 7. 答案生成完毕，撤掉演示遮罩
+      // 7. 答案生成完毕，停留阅读
       at(7900, () => {
-        setState((prev) => ({ ...prev, demoAnalyzing: false, demoRunning: false }))
+        setState((prev) => ({ ...prev, demoAnalyzing: false }))
+      })
+      // 8. 停留后进入深度解读的生成界面
+      at(10600, () => {
+        setState((prev) => ({ ...prev, demoAnalyzing: true, demoDeep: true }))
+        notify('正在生成深度分析与协商拟写…')
+      })
+      // 9. 深度解读结果替换答案区，停留阅读
+      at(12800, () => {
+        setState((prev) => ({
+          ...prev,
+          demoAnalyzing: false,
+          demoDeep: false,
+          answer: {
+            title: '深度分析与协商拟写 · 承租人',
+            text: `围绕「${question}」已核对相关条款与原文引用。建议：先把关键条件（范围、责任、期限、费用）与对方书面确认；对未写明的事项保留追问；随后用下方工坊生成确认消息与补充约定草稿。无依据处保持「未找到相关约定」，不补写结论。`,
+            index: -1,
+          },
+        }))
+        notify('已生成深度分析与协商拟写')
+      })
+      // 10. 停留后进入协商工坊的消息草稿界面
+      at(15500, () => {
+        setState((prev) => ({ ...prev, page: 'workshop', workTab: 'message' }))
+        window.scrollTo(0, 0)
+      })
+      // 11. 工坊停留后演示结束，页面静止可交互
+      at(18200, () => {
+        setState((prev) => ({ ...prev, demoRunning: false }))
         demoRunRef.current = false
       })
     },
@@ -299,6 +328,7 @@ export default function App() {
       ...prev,
       demoRunning: false,
       demoAnalyzing: false,
+      demoDeep: false,
       file: null,
       pendingUpload: null,
       fileText: '',
