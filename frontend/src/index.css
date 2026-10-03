@@ -1,0 +1,329 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ── surfaces ─────────────────────────────────── */
+  --background: oklch(0.975 0.003 250);   /* very slight cool tint, not flat grey */
+  --foreground: oklch(0.115 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.115 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.115 0 0);
+
+  /* ── brand ─────────────────────────────────────── */
+  --primary: oklch(0.115 0 0);
+  --primary-foreground: oklch(0.98 0 0);
+
+  /* ── neutrals ──────────────────────────────────── */
+  --secondary: oklch(0.965 0 0);
+  --secondary-foreground: oklch(0.22 0 0);
+  --muted: oklch(0.965 0 0);
+  --muted-foreground: oklch(0.48 0 0);
+  --accent: oklch(0.965 0 0);
+  --accent-foreground: oklch(0.22 0 0);
+
+  /* ── semantic ──────────────────────────────────── */
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  /* ── chrome ────────────────────────────────────── */
+  --border: oklch(0.91 0.003 250);
+  --input: oklch(0.91 0.003 250);
+  --ring: oklch(0.65 0 0);
+
+  /* ── chart (monochrome) ────────────────────────── */
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.65 0 0);
+  --chart-3: oklch(0.50 0 0);
+  --chart-4: oklch(0.36 0 0);
+  --chart-5: oklch(0.22 0 0);
+
+  /* ── sidebar ───────────────────────────────────── */
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.115 0 0);
+  --sidebar-primary: oklch(0.115 0 0);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.965 0 0);
+  --sidebar-accent-foreground: oklch(0.22 0 0);
+  --sidebar-border: oklch(0.91 0 0);
+  --sidebar-ring: oklch(0.65 0 0);
+
+  /* ── shape ─────────────────────────────────────── */
+  --radius: 0.4rem;
+
+  /* ── shadows (three levels) ────────────────────── */
+  --shadow-card:   0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-raised: 0 4px 12px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04);
+  --shadow-float:  0 12px 36px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06);
+
+  /* ── motion ─────────────────────────────────────── */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast:    120ms;
+  --dur-base:    180ms;
+  --dur-slow:    280ms;
+}
+
+.dark {
+  --background: oklch(0.085 0 0);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.125 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.15 0 0);
+  --popover-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.97 0 0);
+  --primary-foreground: oklch(0.115 0 0);
+  --secondary: oklch(0.18 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.62 0 0);
+  --accent: oklch(0.18 0 0);
+  --accent-foreground: oklch(0.97 0 0);
+  --destructive: oklch(0.70 0.19 22);
+  --destructive-foreground: oklch(0.97 0 0);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.55 0 0);
+  --chart-1: oklch(0.88 0 0);
+  --chart-2: oklch(0.68 0 0);
+  --chart-3: oklch(0.50 0 0);
+  --chart-4: oklch(0.36 0 0);
+  --chart-5: oklch(0.22 0 0);
+  --sidebar: oklch(0.125 0 0);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.97 0 0);
+  --sidebar-primary-foreground: oklch(0.125 0 0);
+  --sidebar-accent: oklch(0.18 0 0);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.55 0 0);
+  --shadow-card:   0 1px 3px rgba(0,0,0,.2),  0 1px 2px rgba(0,0,0,.15);
+  --shadow-raised: 0 4px 12px rgba(0,0,0,.3),  0 1px 3px rgba(0,0,0,.2);
+  --shadow-float:  0 12px 36px rgba(0,0,0,.4),  0 2px 6px rgba(0,0,0,.2);
+}
+
+@theme inline {
+  --color-background:             var(--background);
+  --color-foreground:             var(--foreground);
+  --color-card:                   var(--card);
+  --color-card-foreground:        var(--card-foreground);
+  --color-popover:                var(--popover);
+  --color-popover-foreground:     var(--popover-foreground);
+  --color-primary:                var(--primary);
+  --color-primary-foreground:     var(--primary-foreground);
+  --color-secondary:              var(--secondary);
+  --color-secondary-foreground:   var(--secondary-foreground);
+  --color-muted:                  var(--muted);
+  --color-muted-foreground:       var(--muted-foreground);
+  --color-accent:                 var(--accent);
+  --color-accent-foreground:      var(--accent-foreground);
+  --color-destructive:            var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border:                 var(--border);
+  --color-input:                  var(--input);
+  --color-ring:                   var(--ring);
+  --color-chart-1:                var(--chart-1);
+  --color-chart-2:                var(--chart-2);
+  --color-chart-3:                var(--chart-3);
+  --color-chart-4:                var(--chart-4);
+  --color-chart-5:                var(--chart-5);
+  --color-sidebar:                var(--sidebar);
+  --color-sidebar-foreground:     var(--sidebar-foreground);
+  --color-sidebar-primary:        var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent:         var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border:         var(--sidebar-border);
+  --color-sidebar-ring:           var(--sidebar-ring);
+
+  --radius-sm:  calc(var(--radius) - 2px);
+  --radius-md:  var(--radius);
+  --radius-lg:  calc(var(--radius) + 4px);
+  --radius-xl:  calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 14px);
+  --radius-3xl: calc(var(--radius) + 22px);
+
+  /* Inter Variable for UI; Geist as fallback; Noto SC for CJK */
+  --font-sans: 'Inter Variable', 'Geist Variable', ui-sans-serif, system-ui,
+    -apple-system, 'Segoe UI', Roboto, 'Noto Sans SC', 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  --font-mono: 'Geist Variable', ui-monospace, 'Cascadia Code', 'Fira Code',
+    Menlo, Consolas, monospace;
+  --font-heading: var(--font-sans);
+}
+
+/* ── Base ────────────────────────────────────────────────────── */
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 768px) {
+  body { font-size: 14px; }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2 {
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  p {
+    line-height: 1.65;
+  }
+  a {
+    color: inherit;
+    text-underline-offset: 3px;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+  a:hover { opacity: 0.75; }
+
+}
+
+/* ── Motion vocabulary ───────────────────────────────────────── */
+
+/* Page-level: content slides up 5px, fades in */
+.fade-in {
+  animation: page-enter var(--dur-slow) var(--ease-out) both;
+}
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Card stagger: nth-child delay for grid/list entrance */
+.card-enter {
+  animation: card-enter var(--dur-base) var(--ease-out) both;
+}
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to   { opacity: 1; transform: none; }
+}
+.card-enter:nth-child(1) { animation-delay: 0ms; }
+.card-enter:nth-child(2) { animation-delay: 40ms; }
+.card-enter:nth-child(3) { animation-delay: 80ms; }
+.card-enter:nth-child(4) { animation-delay: 120ms; }
+.card-enter:nth-child(5) { animation-delay: 150ms; }
+.card-enter:nth-child(6) { animation-delay: 180ms; }
+
+/* Accordion reveal */
+.accordion-open {
+  animation: accordion-down var(--dur-base) var(--ease-out);
+}
+@keyframes accordion-down {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Applied card motion: staggered entrance + lift on hover */
+.motion-card {
+  animation: card-enter var(--dur-base) var(--ease-out) both;
+  transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+.motion-card:nth-child(2) { animation-delay: 35ms; }
+.motion-card:nth-child(3) { animation-delay: 70ms; }
+.motion-card:nth-child(4) { animation-delay: 105ms; }
+.motion-card:nth-child(5) { animation-delay: 140ms; }
+.motion-card:nth-child(6) { animation-delay: 175ms; }
+.motion-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-raised); }
+.motion-card:active { transform: translateY(0); }
+
+.spring-hover {
+  transition: transform var(--dur-base) var(--ease-spring),
+              box-shadow var(--dur-base) var(--ease-out);
+}
+.spring-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-raised);
+}
+.spring-hover:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-card);
+  transition-duration: calc(var(--dur-fast) / 2);
+}
+
+/* Reduced motion: cut movement, keep feedback */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in, .card-enter, .motion-card, .accordion-open {
+    animation: none;
+  }
+  .spring-hover:hover {
+    transform: none;
+  }
+}
+
+/* ── Glossary / cross-ref popovers ───────────────────────────── */
+
+.glossary-term,
+.cross-ref {
+  position: relative;
+}
+
+.glossary-popover,
+.cross-ref-popover {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 40;
+  width: 280px;
+  max-width: 88vw;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: var(--shadow-float);
+  padding: 10px 13px;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: left;
+  pointer-events: none;
+  white-space: normal;
+}
+
+.glossary-popover strong,
+.cross-ref-popover strong {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: var(--muted-foreground);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.glossary-term:hover .glossary-popover,
+.glossary-term:focus-within .glossary-popover {
+  display: block;
+}
+
+.cross-ref:hover .cross-ref-popover,
+.cross-ref:focus-within .cross-ref-popover {
+  display: block;
+}

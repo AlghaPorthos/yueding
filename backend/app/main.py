@@ -1592,7 +1592,7 @@ class ContractApplication:
         origin = _header(headers, "Origin")
         configured = os.environ.get(
             "CONTRACT_READER_CORS_ORIGINS",
-            "http://localhost:4173,http://127.0.0.1:4173,http://localhost:8080,http://127.0.0.1:8080,https://alghaporthos.github.io",
+            "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,http://localhost:8080,http://127.0.0.1:8080,https://alghaporthos.github.io",
         )
         allowed = {item.strip() for item in configured.split(",") if item.strip()}
         if not origin or origin not in allowed:
