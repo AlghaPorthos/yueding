@@ -765,17 +765,6 @@ export default function Analysis() {
 
   return (
     <div className="space-y-4">
-      <nav className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        {['导入材料', '阅读与提问', '确认与协商'].map((t, i) => (
-          <span key={t} className={`flex items-center gap-1 ${i === 1 ? 'font-medium text-foreground' : ''}`}>
-            {i > 0 && <span className="mx-1">·</span>}
-            <b className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${i === 1 ? 'bg-primary text-primary-foreground' : 'border'}`}>
-              {i + 1}
-            </b>
-            {t}
-          </span>
-        ))}
-      </nav>
 
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">

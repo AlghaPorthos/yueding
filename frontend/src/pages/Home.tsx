@@ -5,7 +5,6 @@ import { localQuestionSuggestions, useApp } from '../state'
 import type { ImportTab } from '../state'
 import { exampleKeys, exampleMeta, examples } from '../lib/examples'
 import type { ExampleKey } from '../lib/examples'
-import { Steps } from '../components/steps'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { Input } from '../components/ui/input'
@@ -200,8 +199,6 @@ export default function Home({
 
   return (
     <div className="mx-auto w-full max-w-[1360px] space-y-10 px-5 py-8">
-      <Steps current={1} />
-
       <section className="space-y-3 pt-2 text-center">
         <div className="text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase">
           EVERY AGREEMENT MATTERS
