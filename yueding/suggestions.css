@@ -13,6 +13,9 @@
 .home-suggestion:hover{border-color:#afc3f6;box-shadow:0 3px 12px rgba(67,105,231,.10);color:var(--blue)}
 .home-suggestion span{flex:none;color:#9aa8bf;font-size:11px}
 
+.file-preview{margin-top:10px;border:1px solid #dfe6f3;border-radius:9px;background:#fbfcff;padding:10px 12px;font-size:12px;color:#536684;line-height:1.7}
+.file-preview b{display:block;color:#43537a;margin-bottom:4px}
+
 /* ===== 智能阅读（义务清单 / 交叉引用 / 术语表）===== */
 .smart-reading{margin-top:20px;border:1px solid #e3e9f5;border-radius:12px;background:#fbfcff;padding:14px 16px}
 .smart-reading-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}

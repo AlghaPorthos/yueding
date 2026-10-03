@@ -3146,16 +3146,24 @@ class ContractApplication:
             # contracts still require membership before any provider call.
             actor_user_id, checked_workspace = self._assert_contract_access(db, contract_id, headers)
             version = db.execute(
-                "SELECT quality_status FROM contract_versions WHERE id = ? AND contract_id = ?",
+                "SELECT quality_status, quality_metrics FROM contract_versions WHERE id = ? AND contract_id = ?",
                 (version_id, contract_id),
             ).fetchone()
             if version is None:
                 raise ContractError("not_found", "合同版本不存在", 404)
             workspace_id = checked_workspace
             quality_status = version["quality_status"]
+        try:
+            version_metrics = json.loads(version["quality_metrics"] or "{}")
+        except (TypeError, ValueError):
+            version_metrics = {}
+        has_page_text = bool(version_metrics.get("nonempty_pages"))
         invocation_id = str(uuid.uuid4())
         analysis = self._analyze(contract_id, version_id, headers)
-        if analysis["quality_status"] != "ready":
+        # 质量门禁：完全没有可定位证据才阻断生成；OCR 低置信等场景保留
+        # 证据并放行，确定性结论的拦截仍在 analyze 内部，响应继续带复核标记。
+        has_evidence = has_page_text or any(finding.get("contract_evidence") for finding in analysis["findings"])
+        if analysis["quality_status"] != "ready" and not has_evidence:
             self._record_llm_invocation(
                 invocation_id=invocation_id,
                 workspace_id=workspace_id,
@@ -3183,6 +3191,19 @@ class ContractApplication:
         deduped_evidence = list({
             (item.get("page"), item.get("span_id"), item.get("quote")): item for item in evidence
         }.values())
+        if not deduped_evidence:
+            # needs_review 等场景 alignment 不带证据：退回页级原文，
+            # 让快速模型仍有可引用的真实文本而不是空证据。
+            with _open_db(self.db_path) as db:
+                page_rows = db.execute(
+                    "SELECT page, text FROM document_pages WHERE version_id = ? ORDER BY page LIMIT 6",
+                    (version_id,),
+                ).fetchall()
+            deduped_evidence = [
+                {"span_id": f"p{row['page']}-s1", "page": row["page"], "quote": (row["text"] or "")[:240]}
+                for row in page_rows
+                if (row["text"] or "").strip()
+            ]
         # 快速小模型的 grounded 上下文：从本地法律语料检索与任务相关的条文。
         provisions_payload: list[dict[str, Any]] = []
         try:
