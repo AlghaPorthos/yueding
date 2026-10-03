@@ -1333,6 +1333,52 @@ def _job_not_found(job_id: str) -> ContractError:
     return ContractError("job_not_found", "任务不存在", 404)
 
 
+_KB_ARTICLE_HEAD = re.compile(r"^#{0,4}\s*(第[一二三四五六七八九十百千零〇\d]+条)\s*(.*)$")
+_KB_SECTION_HEAD = re.compile(r"^#{1,4}\s+(.+)$")
+
+
+def _kb_split_articles(markdown: str) -> list[tuple[str, str]]:
+    """把法条文档拆成 (条号, 条文) 列表；无“第X条”结构的文书按标题分节。"""
+    body = re.sub(r"\A---\n[\s\S]*?\n---\n?", "", markdown.lstrip(), count=1)
+    articles: list[tuple[str, str]] = []
+    current_no = ""
+    buffer: list[str] = []
+    mode = "article"
+    for line in body.split("\n"):
+        article_match = _KB_ARTICLE_HEAD.match(line.strip())
+        if article_match:
+            if current_no and buffer:
+                articles.append((current_no, "\n".join(buffer).strip()))
+            current_no = article_match.group(1) + (("　" + article_match.group(2)) if article_match.group(2) else "")
+            buffer, mode = [], "article"
+            continue
+        if mode == "article" and not current_no and _KB_SECTION_HEAD.match(line.strip()):
+            if buffer:
+                articles.append(("", "\n".join(buffer).strip()))
+            buffer = []
+            current_no = _KB_SECTION_HEAD.match(line.strip()).group(1)
+            mode = "section"
+            continue
+        if mode == "section" and _KB_SECTION_HEAD.match(line.strip()):
+            if current_no and buffer:
+                articles.append((current_no, "\n".join(buffer).strip()))
+            buffer = []
+            current_no = _KB_SECTION_HEAD.match(line.strip()).group(1)
+            continue
+        buffer.append(line.rstrip())
+    if current_no and buffer:
+        articles.append((current_no, "\n".join(buffer).strip()))
+    elif buffer:
+        tail = "\n".join(buffer).strip()
+        if tail:
+            articles.append(("", tail))
+    cleaned = [(no, text) for no, text in articles if text]
+    if not cleaned:
+        tail = body.strip()
+        return [("", tail)] if tail else []
+    return cleaned
+
+
 class _HTMLTextExtractor(HTMLParser):
     """抽取网页可见正文：跳过脚本/样式，块级标签断行。"""
 
@@ -1633,6 +1679,8 @@ class ContractApplication:
             return self._legal_corpus()
         if method == "GET" and route_path == "/v1/kb/list":
             return self._kb_list()
+        if method == "GET" and route_path == "/v1/kb/search":
+            return self._kb_search(query.get("q", [""])[0])
         kb_item = re.fullmatch(r"/v1/kb/item/([^/]+)", route_path)
         if method == "GET" and kb_item:
             return self._kb_item(kb_item.group(1))
@@ -2586,7 +2634,38 @@ class ContractApplication:
             content = (self._kb_root() / entry["path"]).read_text(encoding="utf-8")
         except OSError:
             raise ContractError("not_found", "知识库文档读取失败", 404)
-        return {**entry, "content": content}, 200
+        return {**entry, "content": content, "articles": _kb_split_articles(content)}, 200
+
+    def _kb_search(self, query: str) -> tuple[dict[str, Any], int]:
+        """跨全部知识库文档的条文级检索（服务端缓存解析结果）。"""
+        normalized = " ".join(query.strip().casefold().split())
+        terms = [t for t in normalized.split() if t]
+        if not terms:
+            return {"status": "not_found", "hits": []}, 200
+        cache = getattr(self, "_kb_articles_cache", None)
+        if cache is None:
+            cache = []
+            for entry in self._kb_manifest():
+                try:
+                    content = (self._kb_root() / entry["path"]).read_text(encoding="utf-8")
+                except OSError:
+                    continue
+                for no, text in _kb_split_articles(content):
+                    cache.append({"entry": entry, "no": no, "text": text})
+            self._kb_articles_cache = cache
+        hits: list[dict[str, Any]] = []
+        for row in cache:
+            haystack = (row["no"] + " " + row["text"]).casefold()
+            if all(term in haystack for term in terms):
+                entry = row["entry"]
+                hits.append({
+                    "doc_id": entry["id"], "doc_title": entry["title"], "doc_type": entry["type"],
+                    "category": entry["category"], "no": row["no"],
+                    "snippet": row["text"][:160],
+                })
+            if len(hits) >= 40:
+                break
+        return {"status": "confirmed" if hits else "not_found", "hits": hits}, 200
 
     def _legal_corpus(self) -> tuple[dict[str, Any], int]:
         """法条知识库全量视图：按来源分组，带版本与内容哈希（可溯源）。"""
