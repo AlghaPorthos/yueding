@@ -46,3 +46,14 @@ coverage/
 .claude/
 .codex/
 .agents/
+
+# PPT Master 脚手架（官方推荐 git clone 安装，约 121MB，含独立 .git/.venv/生成产物 projects/，
+# 自身可 git pull 升级，故整体不入库；成品 PPT 如需入库请拷到 docs/ 下）
+/ppt-master/
+
+# 演示录屏与截图：体积大、可再生，不入库；PPT 工作目录同样仅本地使用
+/videos/
+*.mp4
+/screenshots/
+/screenshots.zip
+/ppt-redesign/
