@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>约定合同阅读器 - 后端 Agentic Workflow 架构</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#1a1d29',
+                primaryTextColor: '#e8eaed',
+                primaryBorderColor: '#3b82f6',
+                lineColor: '#60a5fa',
+                secondaryColor: '#0f1419',
+                tertiaryColor: '#2d3748',
+                background: '#0a0d12',
+                mainBkg: '#1a1d29',
+                secondBkg: '#0f1419',
+                border1: '#3b82f6',
+                border2: '#6366f1',
+                arrowheadColor: '#60a5fa',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                fontSize: '15px',
+                nodeBorder: '#3b82f6',
+                clusterBkg: '#161b26',
+                clusterBorder: '#4b5563',
+                edgeLabelBackground: '#1a1d29',
+                tertiaryTextColor: '#9ca3af',
+                noteBkgColor: '#1e293b',
+                noteBorderColor: '#475569',
+                noteTextColor: '#cbd5e1'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20,
+                nodeSpacing: 80,
+                rankSpacing: 100,
+                diagramPadding: 30
+            }
+        });
+    </script>
+    <style>
+        :root {
+            --surface-0: #05070c;
+            --surface-1: #0a0d12;
+            --surface-2: #0f131c;
+            --surface-3: #161d2b;
+            --surface-4: #1e2636;
+            --accent: #3b82f6;
+            --accent-bright: #60a5fa;
+            --text-primary: #e8eaed;
+            --text-secondary: #9ca3af;
+            --border: #374151;
+            color-scheme: dark;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--surface-0) 0%, var(--surface-1) 50%, var(--surface-0) 100%);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 2rem);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: clamp(2rem, 4vw, 3rem);
+            padding: clamp(1.5rem, 3vw, 2rem);
+            background: var(--surface-2);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, var(--accent-bright) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: clamp(0.95rem, 2vw, 1.1rem);
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: 0.01em;
+        }
+
+        .diagram-container {
+            background: var(--surface-2);
+            border-radius: 20px;
+            padding: clamp(1.5rem, 3vw, 3rem);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            margin-bottom: clamp(2rem, 4vw, 3rem);
+            overflow-x: auto;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            min-height: 600px;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .legend-item {
+            background: var(--surface-3);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+
+        .legend-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+        }
+
+        .legend-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-bright);
+            letter-spacing: -0.01em;
+        }
+
+        .legend-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .tech-stack {
+            background: var(--surface-2);
+            border-radius: 16px;
+            padding: clamp(1.5rem, 3vw, 2rem);
+            border: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        .tech-stack h2 {
+            font-size: clamp(1.25rem, 3vw, 1.5rem);
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .tech-item {
+            background: var(--surface-3);
+            padding: 0.875rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tech-item:hover {
+            border-color: var(--accent);
+            background: var(--surface-4);
+        }
+
+        .tech-label {
+            font-weight: 600;
+            color: var(--accent-bright);
+            margin-right: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .diagram-container {
+                padding: 1rem;
+            }
+
+            .legend {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>约定合同阅读器</h1>
+            <p class="subtitle">后端 Agentic Workflow 与数据流向架构</p>
+        </header>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+graph TB
+    subgraph Input["📥 输入层 Input Layer"]
+        Upload["文件上传<br/>PDF/Image/Text"]
+        Fetch["网页抓取<br/>HTTP Fetch"]
+        TextInput["文本粘贴<br/>Direct Text"]
+    end
+
+    subgraph Extraction["🔍 提取层 Extraction Layer"]
+        Quality["质量评估<br/>Quality Gate"]
+        PDFParser["PDF解析<br/>PyPDF/Fallback"]
+        OCREngine["OCR引擎<br/>PaddleOCR/Tesseract"]
+        TextNorm["文本归一化<br/>Unicode/Cleanup"]
+    end
+
+    subgraph Intelligence["🧠 智能分析层 Intelligence Layer"]
+        ContractType["合同分类<br/>Keyword+LLM"]
+        PhaseScreen["初筛引擎<br/>Jev+LLM+Rules"]
+        PhaseAlign["对齐引擎<br/>Legal Index"]
+        PhaseGenerate["生成引擎<br/>Draft Agent"]
+        PhaseMatters["要点提取<br/>Matters Agent"]
+    end
+
+    subgraph SubAgents["🤖 子代理层 Sub-Agents"]
+        JevJudge["Jev判定<br/>SystemOne API"]
+        LLMRouter["LLM路由<br/>Flash/Sonnet"]
+        LegalSearch["法律检索<br/>Bigram Index"]
+        IntentNormalizer["意图归一<br/>Regex Extractor"]
+    end
+
+    subgraph Storage["💾 存储层 Storage Layer"]
+        SQLite["SQLite DB<br/>Contracts/Jobs"]
+        LegalCorpus["法律语料<br/>JSONL Index"]
+        JobQueue["任务队列<br/>Retry+Backoff"]
+    end
+
+    subgraph Output["📤 输出层 Output Layer"]
+        Findings["条款发现<br/>Confirmed/NotFound"]
+        Screen["立场评估<br/>Favorable/Unfavorable"]
+        Alignment["法条匹配<br/>Citations"]
+        Drafts["修改建议<br/>Staged Drafts"]
+        Matters["关键要点<br/>Structured"]
+    end
+
+    Upload --> Quality
+    Fetch --> Quality
+    TextInput --> Quality
+
+    Quality -->|ready| PDFParser
+    Quality -->|needs_review| OCREngine
+    Quality -->|failed| TextNorm
+
+    PDFParser --> ContractType
+    OCREngine --> ContractType
+    TextNorm --> ContractType
+
+    ContractType --> PhaseScreen
+    ContractType --> PhaseAlign
+    ContractType --> PhaseGenerate
+    ContractType --> PhaseMatters
+
+    PhaseScreen --> JevJudge
+    PhaseScreen --> LLMRouter
+    PhaseAlign --> LegalSearch
+    PhaseAlign --> IntentNormalizer
+    PhaseGenerate --> LLMRouter
+    PhaseMatters --> LLMRouter
+
+    JevJudge --> SQLite
+    LLMRouter --> SQLite
+    LegalSearch --> LegalCorpus
+    IntentNormalizer --> SQLite
+
+    SQLite --> Findings
+    SQLite --> Screen
+    SQLite --> Alignment
+    SQLite --> Drafts
+    SQLite --> Matters
+
+    JobQueue -.->|retry| PhaseScreen
+    JobQueue -.->|retry| PhaseAlign
+    JobQueue -.->|retry| PhaseGenerate
+
+    classDef inputStyle fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px,color:#e0e7ff
+    classDef extractStyle fill:#1e40af,stroke:#60a5fa,stroke-width:2px,color:#dbeafe
+    classDef intelligenceStyle fill:#7c3aed,stroke:#a78bfa,stroke-width:2px,color:#ede9fe
+    classDef agentStyle fill:#be123c,stroke:#f43f5e,stroke-width:2px,color:#ffe4e6
+    classDef storageStyle fill:#047857,stroke:#10b981,stroke-width:2px,color:#d1fae5
+    classDef outputStyle fill:#c2410c,stroke:#f97316,stroke-width:2px,color:#ffedd5
+
+    class Upload,Fetch,TextInput inputStyle
+    class Quality,PDFParser,OCREngine,TextNorm extractStyle
+    class ContractType,PhaseScreen,PhaseAlign,PhaseGenerate,PhaseMatters intelligenceStyle
+    class JevJudge,LLMRouter,LegalSearch,IntentNormalizer agentStyle
+    class SQLite,LegalCorpus,JobQueue storageStyle
+    class Findings,Screen,Alignment,Drafts,Matters outputStyle
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-title">📥 输入层</div>
+                <div class="legend-desc">支持多种格式输入：PDF文档、图片扫描件、网页链接、直接文本粘贴</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-title">🔍 提取层</div>
+                <div class="legend-desc">质量门禁分级：优质文本直通，模糊图片OCR识别，质量评估贯穿全程</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-title">🧠 智能分析层</div>
+                <div class="legend-desc">四阶段分析：合同分类 → 立场初筛 → 法条对齐 → 条款生成 → 要点提取</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-title">🤖 子代理层</div>
+                <div class="legend-desc">专业化子代理：Jev快速判定、LLM深度推理、法律检索、意图归一</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-title">💾 存储层</div>
+                <div class="legend-desc">持久化存储：SQLite主库、法律语料索引、任务队列与重试机制</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-title">📤 输出层</div>
+                <div class="legend-desc">结构化输出：条款发现、立场评估、法条引用、修改建议、关键要点</div>
+            </div>
+        </div>
+
+        <div class="tech-stack">
+            <h2>技术栈与关键组件</h2>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <span class="tech-label">语言:</span>Python 3.11+
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">框架:</span>FastAPI (ASGI)
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">OCR:</span>PaddleOCR + Tesseract
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">PDF:</span>PyPDF + Fallback Parser
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">数据库:</span>SQLite3
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">LLM:</span>Flash + Sonnet
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">判定:</span>Jev SystemOne API
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">检索:</span>Bigram + IDF
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">队列:</span>Job Queue + Retry
+                </div>
+                <div class="tech-item">
+                    <span class="tech-label">部署:</span>WSGI/ASGI Compatible
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
