@@ -41,3 +41,8 @@ yarn-error.log*
 # 本地测试产物
 coverage/
 *.lcov
+
+# 本地 AI 助手配置（各机器私有，不入库）
+.claude/
+.codex/
+.agents/
