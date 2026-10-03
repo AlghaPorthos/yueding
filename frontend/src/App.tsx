@@ -12,6 +12,7 @@ import { examples } from './lib/examples'
 import { pagesToClauses } from './lib/pages'
 import type { ExampleKey } from './lib/examples'
 import { Button } from './components/ui/button'
+import BrandMark from './components/BrandMark'
 import Home from './pages/Home'
 import Analysis from './pages/Analysis'
 import Workshop from './pages/Workshop'
@@ -83,7 +84,7 @@ function Header({ page, onNavigate }: { page: Page; onNavigate: (page: Page) => 
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-sm">
       <div className="mx-auto flex h-12 w-full max-w-[1360px] items-center justify-between gap-3 px-5">
         <button type="button" className="flex items-center gap-2" onClick={() => onNavigate('home')} aria-label="回到首页">
-          <span aria-hidden className="text-2xl leading-none font-bold text-primary">约</span>
+          <BrandMark className="h-7 w-7" />
           <span className="text-sm font-semibold tracking-tight">约定</span>
           <span className="text-[11px] font-medium tracking-[0.16em] text-muted-foreground">YUEDING</span>
         </button>
