@@ -261,7 +261,7 @@ CREATE INDEX IF NOT EXISTS idx_llm_invocations_contract_created
 def apply_migrations(path: str | Path) -> None:
     db_path = Path(path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(db_path)
+    connection = sqlite3.connect(db_path, timeout=15)
     try:
         connection.executescript(SCHEMA)
         # Early databases made the human-readable span id globally unique.
@@ -374,7 +374,7 @@ def apply_migrations(path: str | Path) -> None:
 
 
 def connect(path: str | Path) -> sqlite3.Connection:
-    connection = sqlite3.connect(path)
+    connection = sqlite3.connect(path, timeout=15)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
     return connection

@@ -9,6 +9,7 @@ import os
 import socketserver
 import sys
 from collections.abc import Mapping
+from socketserver import ThreadingMixIn
 from wsgiref.simple_server import WSGIServer, make_server
 
 DEFAULT_HOST = "127.0.0.1"
@@ -40,13 +41,14 @@ def resolve_address(
 def main(argv: list[str] | None = None) -> int:
     from app.main import app
 
-    class DevServer(WSGIServer):
-        """WSGIServer without the reverse-DNS lookup in server_bind.
+    class DevServer(ThreadingMixIn, WSGIServer):
+        """多线程 WSGI：LLM/OCR/检索等慢请求并发处理，避免全站排队。
 
-        HTTPServer.server_bind resolves socket.getfqdn(host), which can stall
-        for tens of seconds on hosts with slow reverse DNS before the server
-        can accept a single request.
+        同时去掉 server_bind 的反向 DNS 解析（慢 DNS 主机上会卡住
+        首个请求数十秒）。daemon_threads 让进程退出不被挂起连接阻塞。
         """
+
+        daemon_threads = True
 
         def server_bind(self):
             socketserver.TCPServer.server_bind(self)
