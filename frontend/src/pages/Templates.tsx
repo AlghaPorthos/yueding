@@ -23,7 +23,7 @@ export default function Templates({ onChooseSample }: TemplatesProps) {
   const { api } = useApp()
 
   return (
-    <div className="mx-auto w-full max-w-[1360px] px-5 py-8">
+    <div className="mx-auto w-full max-w-[1360px] 2xl:max-w-[2040px] px-5 py-8">
       <Button variant="ghost" size="sm" onClick={() => api.navigate('home')}>
         ‹　返回首页
       </Button>
@@ -35,7 +35,7 @@ export default function Templates({ onChooseSample }: TemplatesProps) {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
         {exampleKeys.map((key) => {
           const sample = examples[key]
           const meta = exampleMeta[key]

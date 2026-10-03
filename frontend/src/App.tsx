@@ -84,7 +84,7 @@ function Header({ page, onNavigate }: { page: Page; onNavigate: (page: Page) => 
   const [open, setOpen] = useState(false)
   return (
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-sm">
-      <div className="mx-auto flex h-12 w-full max-w-[1360px] items-center justify-between gap-3 px-5">
+      <div className="mx-auto flex h-12 w-full max-w-[1360px] 2xl:max-w-[2040px] items-center justify-between gap-3 px-5">
         <button type="button" className="flex items-center gap-2" onClick={() => onNavigate('home')} aria-label="回到首页">
           <BrandMark className="h-7 w-7" />
           <span className="text-sm font-semibold tracking-tight">约定</span>
@@ -121,7 +121,7 @@ function Header({ page, onNavigate }: { page: Page; onNavigate: (page: Page) => 
           className="animate-in fade-in slide-in-from-top-1 bg-background/95 shadow-lg backdrop-blur-sm duration-150 md:hidden"
           aria-label="移动端导航"
         >
-          <div className="mx-auto grid w-full max-w-[1360px] gap-0.5 px-5 py-2">
+          <div className="mx-auto grid w-full max-w-[1360px] 2xl:max-w-[2040px] gap-0.5 px-5 py-2">
             {NAV.map((item) => (
               <Button
                 key={item.key}
@@ -556,7 +556,7 @@ export default function App() {
     <AppContext.Provider value={contextValue}>
       <div className="min-h-screen bg-background text-foreground">
         <Header page={state.page} onNavigate={api.navigate} />
-        <main key={state.page} className="mx-auto w-full max-w-[1360px] px-5 py-8 fade-in">
+        <main key={state.page} className="mx-auto w-full max-w-[1360px] 2xl:max-w-[2040px] px-5 py-8 fade-in">
           {state.page === 'home' ? (
             <Home
               onChooseSample={simulateTemplate}

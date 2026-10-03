@@ -139,7 +139,7 @@ export default function Legal() {
 
   if (!backendEnabled) {
     return (
-    <div className="mx-auto w-full max-w-[1360px] px-5 py-8">
+    <div className="mx-auto w-full max-w-[1360px] 2xl:max-w-[2040px] px-5 py-8">
         {header}
         <Card className="mt-6 py-8">
           <CardContent className="px-4 text-center text-sm text-muted-foreground">
@@ -164,7 +164,7 @@ export default function Legal() {
       : arts
     const shown = state.kbShowAll ? filtered : filtered.slice(0, 60)
     return (
-    <div className="mx-auto w-full max-w-[1360px] px-5 py-8">
+    <div className="mx-auto w-full max-w-[1360px] 2xl:max-w-[2040px] px-5 py-8">
         <Button
           variant="ghost"
           onClick={() => api.patch({ kbItem: null, kbQuery: '', kbShowAll: false })}
@@ -263,7 +263,7 @@ export default function Legal() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1360px] px-5 py-8">
+    <div className="mx-auto w-full max-w-[1360px] 2xl:max-w-[2040px] px-5 py-8">
       {header}
       <form className="mt-4 flex flex-wrap gap-2" onSubmit={doSearch}>
         <Select

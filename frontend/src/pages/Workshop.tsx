@@ -127,7 +127,7 @@ function Workshop() {
   const excerpt = clauses[selected] || '未找到相关约定'
 
   return (
-    <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-6 px-5 py-8">
+    <div className="mx-auto flex w-full max-w-[1360px] 2xl:max-w-[2040px] flex-col gap-6 px-5 py-8">
       <Button variant="ghost" className="w-fit px-2" onClick={() => api.navigate('analysis')}>
         ‹　返回分析
       </Button>

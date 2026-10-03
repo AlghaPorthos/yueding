@@ -132,7 +132,7 @@ export default function Contracts({ onOpenContract }: ContractsProps) {
   )
 
   return (
-    <div className="mx-auto w-full max-w-[1360px] px-5 py-8">
+    <div className="mx-auto w-full max-w-[1360px] 2xl:max-w-[2040px] px-5 py-8">
       <Button variant="ghost" size="sm" onClick={() => api.navigate('home')}>
         ‹　返回首页
       </Button>
