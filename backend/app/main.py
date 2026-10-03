@@ -1631,6 +1631,11 @@ class ContractApplication:
             return self._upload(headers, body, new_contract_path=path == "/contracts")
         if method == "GET" and route_path == "/v1/legal/corpus":
             return self._legal_corpus()
+        if method == "GET" and route_path == "/v1/kb/list":
+            return self._kb_list()
+        kb_item = re.fullmatch(r"/v1/kb/item/([^/]+)", route_path)
+        if method == "GET" and kb_item:
+            return self._kb_item(kb_item.group(1))
         if method == "GET" and path.startswith("/v1/legal/search"):
             return self._legal_search(
                 query.get("q", [""])[0],
@@ -2524,6 +2529,64 @@ class ContractApplication:
                 )
                 recovered.append(row["id"])
         return {"recovered": recovered, "count": len(recovered)}
+
+    KB_CATEGORIES = {
+        "维基文库_法律法规": "法条",
+        "官方_示范文书": "案例",
+    }
+
+    def _kb_manifest(self) -> list[dict[str, Any]]:
+        """资料包清单：manifest.json 过滤出法条/案例两类文档。"""
+        cache = getattr(self, "_kb_manifest_cache", None)
+        if cache is not None:
+            return cache
+        kb_dir = Path(os.environ.get("CONTRACT_READER_KB_DIR") or (Path(__file__).resolve().parent.parent / ".." / "法律文书Agent资料包"))
+        try:
+            manifest = json.loads((kb_dir / "manifest.json").read_text(encoding="utf-8"))
+            items = manifest.get("items") if isinstance(manifest, dict) else None
+        except (OSError, ValueError):
+            items = None
+        entries: list[dict[str, Any]] = []
+        if isinstance(items, list):
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                path = str(item.get("path") or "")
+                category = path.split("/", 1)[0] if "/" in path else ""
+                doc_type = self.KB_CATEGORIES.get(category)
+                if not doc_type or not (kb_dir / path).is_file():
+                    continue
+                entries.append({
+                    "id": str(len(entries)),
+                    "title": str(item.get("title") or Path(path).stem),
+                    "type": doc_type,
+                    "category": category,
+                    "path": path,
+                    "source": str(item.get("source") or ""),
+                    "sha256": str(item.get("sha256") or ""),
+                    "bytes": item.get("bytes"),
+                })
+        self._kb_manifest_cache = entries
+        return entries
+
+    def _kb_root(self) -> Path:
+        return Path(os.environ.get("CONTRACT_READER_KB_DIR") or (Path(__file__).resolve().parent.parent / ".." / "法律文书Agent资料包"))
+
+    def _kb_list(self) -> tuple[dict[str, Any], int]:
+        entries = self._kb_manifest()
+        return {"status": "confirmed" if entries else "not_found", "total": len(entries), "items": entries}, 200
+
+    def _kb_item(self, item_id: str) -> tuple[dict[str, Any], int]:
+        entries = self._kb_manifest()
+        try:
+            entry = entries[int(item_id)]
+        except (ValueError, IndexError):
+            raise ContractError("not_found", "知识库条目不存在", 404)
+        try:
+            content = (self._kb_root() / entry["path"]).read_text(encoding="utf-8")
+        except OSError:
+            raise ContractError("not_found", "知识库文档读取失败", 404)
+        return {**entry, "content": content}, 200
 
     def _legal_corpus(self) -> tuple[dict[str, Any], int]:
         """法条知识库全量视图：按来源分组，带版本与内容哈希（可溯源）。"""
