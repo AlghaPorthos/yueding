@@ -287,24 +287,15 @@ export default function App() {
       at(7900, () => {
         setState((prev) => ({ ...prev, demoAnalyzing: false }))
       })
-      // 8. 停留后进入深度解读的生成界面
+      // 8. 停留后切入「智读」界面：义务清单 / 术语表 / 交叉引用的整理加载
       at(10600, () => {
-        setState((prev) => ({ ...prev, demoAnalyzing: true, demoDeep: true }))
-        notify('正在生成深度分析与协商拟写…')
+        setState((prev) => ({ ...prev, analysisTab: 'smart', demoDeep: true }))
+        notify('正在整理智读内容…')
       })
-      // 9. 深度解读结果替换答案区，停留阅读
+      // 9. 智读内容呈现，停留阅读
       at(12800, () => {
-        setState((prev) => ({
-          ...prev,
-          demoAnalyzing: false,
-          demoDeep: false,
-          answer: {
-            title: '深度分析与协商拟写 · 承租人',
-            text: `围绕「${question}」已核对相关条款与原文引用。建议：先把关键条件（范围、责任、期限、费用）与对方书面确认；对未写明的事项保留追问；随后用下方工坊生成确认消息与补充约定草稿。无依据处保持「未找到相关约定」，不补写结论。`,
-            index: -1,
-          },
-        }))
-        notify('已生成深度分析与协商拟写')
+        setState((prev) => ({ ...prev, demoDeep: false }))
+        notify('智读整理完成')
       })
       // 10. 停留后进入协商工坊的消息草稿界面
       at(15500, () => {
@@ -461,7 +452,7 @@ export default function App() {
         <main key={state.page} className="mx-auto w-full max-w-[1360px] px-5 py-8 fade-in">
           {state.page === 'home' ? (
             <Home
-              onChooseSample={chooseSample}
+              onChooseSample={simulateTemplate}
               onStartTextAnalysis={startTextAnalysis}
               onStartFileAnalysis={startFileAnalysis}
               onStartUrlAnalysis={startUrlAnalysis}

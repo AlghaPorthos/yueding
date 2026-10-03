@@ -854,7 +854,7 @@ export default function Analysis() {
                       aria-hidden
                       className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent"
                     />
-                    {state.demoDeep ? '正在生成深度分析与协商拟写…' : '正在定位相关条款并生成答案…'}
+                    正在定位相关条款并生成答案…
                   </p>
                   <Skeleton className="h-24 w-full" />
                   <Skeleton className="h-24 w-full" />
@@ -1078,6 +1078,19 @@ export default function Analysis() {
             </TabsContent>
 
             <TabsContent value="smart" className="mt-4">
+              {state.demoDeep ? (
+                <div className="space-y-3">
+                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span
+                      aria-hidden
+                      className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent"
+                    />
+                    正在整理义务清单、术语表与交叉引用…
+                  </p>
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-40 w-full" />
+                </div>
+              ) : (
               <div className="space-y-3">
                 <div>
                   <h3 className="text-sm font-semibold">围绕当前问题的提取</h3>
@@ -1164,6 +1177,7 @@ export default function Analysis() {
                   </CardContent>
                 </Card>
               </div>
+              )}
             </TabsContent>
           </Tabs>
         </section>
