@@ -40,8 +40,19 @@ npm run dev
 - `start-dev.sh` 会加载内置法律语料（`backend/data/legal_corpus.jsonl`），并在能找到 API key 时配置 GLM 模型链（主 `glm-5.3-flash`、备 `glm-4-flash`）。没有配 key 也能跑：条款卡片、原文定位、法律检索这些确定性能力照常工作，只是「深度分析」和 LLM 版草稿不可用。
 - 脚本默认用 `backend/.venv/bin/python`。如果还没有虚拟环境，先 `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`，或者直接用 README 里的裸命令起服务。
 - 完全不想起后端也行。把 `YUEDING_BACKEND_CONFIG` 的 `baseUrl` 设为空字符串（见「开发者接入指南」），前端进入纯本地模式：示例合同、关键词定位、沟通模板全部可用，零网络请求。
+- 想挂到公网做演示，用仓库里的单端口方案（见「公网演示部署」）。
 
-![首页导入界面](screenshots/home.png)
+### 公网演示部署（可选）
+
+`frontend/serve_demo.py` 把构建产物和后端 API 收进同一个端口，浏览器端零 CORS 配置：
+
+```sh
+cd frontend
+npm run build
+python3 serve_demo.py    # 0.0.0.0:8000 托管 dist/，API 反代到 127.0.0.1:8001
+```
+
+反代路径为 `/v1/`、`/contracts/`、`/legal/`、`/kb/`、`/healthz`、`/readyz`（环境变量 `BACKEND_HOST` / `BACKEND_PORT` 可改），并向 index.html 注入同源后端配置，公网 IP、SSH 隧道、本机打开行为一致。后端相应用 `CONTRACT_READER_PORT=8001 bash start-dev.sh` 启动。不想动 HTML 时，也可以直接在页面 URL 上加 `?backend=https://你的后端地址` 指定后端（优先级最高）。
 
 ## 功能详解
 
@@ -63,7 +74,6 @@ npm run dev
 
 分析页是左右双栏：左栏是合同条款列表，右栏从上到下是问答区和三个标签页——**分析 / 原文 / 智读**。
 
-![分析页双栏视图](screenshots/analysis.png)
 
 **分析**标签展示条款卡片。租房场景下，押金、房屋改动、维修、提前退租四类条款由后端确定性规则生成，每张卡片带原文引用、页码和「对用户的影响」。点左栏任意条款，右栏联动展示；反过来点卡片也能高亮原文位置。
 
@@ -77,7 +87,6 @@ npm run dev
 - **术语表**——合同里的「承租人」「隐蔽工程」「交付物」这类术语，在左栏条款里以下划虚线标出，鼠标悬浮即出释义，不用再去搜。
 - **交叉引用**——条款里出现「按第六条执行」这类引用时显示为蓝色虚线链接，点击直接跳到对应条款，长合同里来回翻页的痛苦少一大半。
 
-![智读标签：义务清单与术语悬浮](screenshots/smart-read.png)
 
 ### 提问反馈
 
@@ -99,7 +108,6 @@ npm run dev
 
 三份草稿都可以直接编辑改写，改完一键复制。
 
-![协商工坊三份草稿](screenshots/workshop.png)
 
 要说三遍的事这里说一遍：**草稿不会自动发送给任何人**。「约定」不接入你的聊天工具、邮件、短信，也不代你签约。复制之后发不发、发给谁、怎么改口吻，都是你的决定。补充约定尤其需要双方核对后才有效力——它是帮你把话题摆上桌子的，不是替你成交的。
 
@@ -109,7 +117,9 @@ npm run dev
 
 分析过的合同出现在「我的合同」列表里，点开即回到对应的分析会话。前端侧这份列表是会话级的，刷新即清空；但只要后端在，每次上传都会写入 SQLite 的合同和版本记录（含 SHA-256、质量指标），从列表重新载入时走的是后端持久化的数据，不是浏览器缓存。一个版本对应一次导入，重复上传同一份文件会各自留痕。
 
-![我的合同会话列表](screenshots/contracts.png)
+### 模板库
+
+顶部导航的「模板库」收录六种虚构示例合同——租房、隐私、劳动、装修、培训、摄影，每种带要点标签和一句介绍，是走通完整流程最快的入口。点击卡片后会有一段约两秒的分步解析动画（读取合同文本 → 切分条款结构 → 定位关键条款 → 生成阅读视图），完成后自动进入分析页，和真实导入走的是同一个界面。示例内容全部虚构，不是可直接签署的合同范本。
 
 ### 法条知识库
 
@@ -122,7 +132,6 @@ npm run dev
 
 需要后端服务在线，纯本地模式下知识库页面会提示启动后端。
 
-![法条知识库与条文速查](screenshots/legal.png)
 
 ### 帮助中心
 
@@ -206,19 +215,27 @@ flowchart LR
 
 ### YUEDING_BACKEND_CONFIG：指定标准后端
 
-前端在 `index.html` 加载业务代码之前读取 `window.YUEDING_BACKEND_CONFIG`：
+前端在 `index.html` 加载业务代码之前解析后端地址，优先级从高到低：
+
+1. `?backend=https://…` URL 查询参数——公网演示（如 CF Tunnel）时直接在链接里指定后端；
+2. 页面预写的 `window.YUEDING_BACKEND_CONFIG.baseUrl`——部署时写进 HTML；
+3. `localhost / 127.0.0.1` 自动指向 `http://127.0.0.1:8000`；
+4. 其他域名默认空字符串——纯本地模式，前端不发任何请求。
 
 ```html
 <script>
-  window.YUEDING_BACKEND_CONFIG = Object.assign({
-    baseUrl: /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://127.0.0.1:8000' : '',
-    timeout: 60000
-  }, window.YUEDING_BACKEND_CONFIG || {})
+  var qs = new URLSearchParams(location.search)
+  var fromQuery = qs.get('backend')
+  var isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+  window.YUEDING_BACKEND_CONFIG = Object.assign(
+    { baseUrl: isLocal ? 'http://127.0.0.1:8000' : '', timeout: 60000 },
+    window.YUEDING_BACKEND_CONFIG || {},
+    fromQuery ? { baseUrl: fromQuery.replace(/\/$/, '') } : {}
+  )
 </script>
 ```
 
-- `baseUrl` 为空字符串时进入纯本地模式，前端不发任何请求；
-- 部署到其他域名时，覆盖 `baseUrl` 指向你的后端地址；
+- 部署到其他域名时，覆盖 `baseUrl` 指向你的后端地址（或直接用 `?backend=` 参数）；
 - 后端侧记得配 CORS：`CONTRACT_READER_CORS_ORIGINS` 设为逗号分隔的完整 origin（不要用 `*`）。
 
 前端所有页面通过单一客户端模块（`frontend/src/api/client.ts`）调用后端，主要接口：`POST /v1/contracts`（上传，字段名 `file`）、`POST .../analyze`、`POST .../screen`（立场初筛）、`POST .../generate`（深度分析，需 LLM）、`GET /v1/legal/search?q=`。错误结构统一，响应形状在客户端层做过归一。
@@ -272,7 +289,6 @@ flowchart LR
 
 我们选择把这些写出来而不是藏起来，因为对一个读合同的工具，「它哪里不可靠」和「它哪里能用」同样重要。确定性的部分（条款卡片、原文引用、法条检索）你可以信；生成式的部分（深度分析、草稿）永远要过你自己的眼。
 
-![移动端窄屏视图](screenshots/mobile.png)
 
 ---
 
