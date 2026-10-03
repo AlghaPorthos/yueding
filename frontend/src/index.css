@@ -160,19 +160,24 @@
 
 /* ── Base ────────────────────────────────────────────────────── */
 
+/* 整体字号上调：rem 基准 16 → 17.5px，rem 计价的文字与间距同比例放大约 9% */
+html {
+  font-size: 17.5px;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 @media (min-width: 768px) {
-  body { font-size: 14px; }
+  body { font-size: 15px; }
 }
 
 @layer base {
