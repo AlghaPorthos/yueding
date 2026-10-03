@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { exampleKeys, exampleMeta, examples } from '../lib/examples'
 import type { ExampleKey } from '../lib/examples'
@@ -18,8 +19,38 @@ const INTROS: Record<ExampleKey, string> = {
   photography: '虚构摄影服务合同，含底片交付、版权归属和档期改期条款。',
 }
 
+// 仿真加载：点击后逐条点亮的解析步骤，走完再进入分析页
+const LOAD_STEPS = [
+  '正在读取合同文本',
+  '正在切分条款结构',
+  '正在定位关键条款',
+  '正在生成阅读视图',
+]
+const STEP_MS = 480
+
 export default function Templates({ onChooseSample }: TemplatesProps) {
   const { api } = useApp()
+  const [loading, setLoading] = useState<{ key: ExampleKey; step: number } | null>(null)
+  const timer = useRef<number>(0)
+
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  const startLoading = (key: ExampleKey) => {
+    if (loading) return
+    window.clearTimeout(timer.current)
+    setLoading({ key, step: 0 })
+    const advance = (step: number) => {
+      timer.current = window.setTimeout(() => {
+        if (step >= LOAD_STEPS.length - 1) {
+          onChooseSample(key)
+          return
+        }
+        setLoading({ key, step: step + 1 })
+        advance(step + 1)
+      }, STEP_MS)
+    }
+    advance(0)
+  }
 
   return (
     <div className="mx-auto w-full max-w-[1360px] px-5 py-8">
@@ -38,13 +69,21 @@ export default function Templates({ onChooseSample }: TemplatesProps) {
         {exampleKeys.map((key) => {
           const sample = examples[key]
           const meta = exampleMeta[key]
+          const isLoading = loading?.key === key
+          const activeStep = isLoading && loading ? loading.step : -1
+          const isIdle = !loading
           return (
             <button
               key={key}
               type="button"
-              onClick={() => onChooseSample(key)}
+              onClick={() => startLoading(key)}
               style={{ '--tone': meta.tone } as CSSProperties}
-              className="motion-card group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md"
+              aria-busy={isLoading}
+              className={`motion-card group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-200 ${
+                isIdle ? 'hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md' : ''
+              } ${isLoading ? 'border-foreground/20 shadow-md' : ''} ${
+                loading && !isLoading ? 'pointer-events-none opacity-40' : ''
+              }`}
             >
               {/* tone accent top bar */}
               <span
@@ -73,29 +112,77 @@ export default function Templates({ onChooseSample }: TemplatesProps) {
 
                 {/* title */}
                 <div>
-                  <p className="text-[11px] text-muted-foreground/70">虚构示例</p>
+                  <p className="text-[11px] text-muted-foreground/70">
+                    {isLoading ? '解析中' : '虚构示例'}
+                  </p>
                   <h2 className="mt-0.5 text-[15px] font-semibold leading-snug text-foreground">
                     {sample.title}
                   </h2>
                 </div>
 
-                {/* intro */}
-                <p className="text-[12px] leading-relaxed text-muted-foreground">
-                  {INTROS[key]}
-                </p>
+                {isLoading ? (
+                  // 仿真加载：步骤逐条完成，当前步骤旋转
+                  <div className="mt-auto flex flex-col gap-2 pt-1" role="status">
+                    {LOAD_STEPS.map((label, i) => {
+                      const done = i < activeStep
+                      const active = i === activeStep
+                      return (
+                        <div
+                          key={label}
+                          className={`flex items-center gap-2 text-[12px] transition-colors duration-200 ${
+                            done
+                              ? 'text-muted-foreground'
+                              : active
+                                ? 'text-foreground'
+                                : 'text-muted-foreground/40'
+                          }`}
+                        >
+                          {done ? (
+                            <span
+                              aria-hidden
+                              className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[9px] text-white"
+                              style={{ background: meta.tone }}
+                            >
+                              ✓
+                            </span>
+                          ) : active ? (
+                            <span
+                              aria-hidden
+                              className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-t-transparent"
+                              style={{ borderColor: meta.tone, borderTopColor: 'transparent' }}
+                            />
+                          ) : (
+                            <span
+                              aria-hidden
+                              className="h-3.5 w-3.5 shrink-0 rounded-full border border-muted-foreground/25"
+                            />
+                          )}
+                          <span>{label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <>
+                    {/* intro */}
+                    <p className="text-[12px] leading-relaxed text-muted-foreground">
+                      {INTROS[key]}
+                    </p>
 
-                {/* key points */}
-                <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
-                  {meta.points.map((point) => (
-                    <span
-                      key={point}
-                      className="rounded-md px-2 py-0.5 text-[11px]"
-                      style={{ background: `${meta.tone}12`, color: meta.tone }}
-                    >
-                      {point}
-                    </span>
-                  ))}
-                </div>
+                    {/* key points */}
+                    <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
+                      {meta.points.map((point) => (
+                        <span
+                          key={point}
+                          className="rounded-md px-2 py-0.5 text-[11px]"
+                          style={{ background: `${meta.tone}12`, color: meta.tone }}
+                        >
+                          {point}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* hover arrow */}

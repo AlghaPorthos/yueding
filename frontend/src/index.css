@@ -242,8 +242,9 @@ body {
 }
 
 /* Applied card motion: staggered entrance + lift on hover */
+/* backwards：延迟期持起始帧，结束后交还级联，避免锁死 opacity/transform 覆盖后续状态类 */
 .motion-card {
-  animation: card-enter var(--dur-base) var(--ease-out) both;
+  animation: card-enter var(--dur-base) var(--ease-out) backwards;
   transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 }
 .motion-card:nth-child(2) { animation-delay: 35ms; }
