@@ -4,6 +4,7 @@ import type { UploadResult } from '../api/client'
 import { localQuestionSuggestions, useApp } from '../state'
 import type { ImportTab } from '../state'
 import { exampleKeys, exampleMeta, examples } from '../lib/examples'
+import { pagesToClauses } from '../lib/pages'
 import type { ExampleKey } from '../lib/examples'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
@@ -140,7 +141,7 @@ export default function Home({
     api.notify('正在解析文件…')
     try {
       const data = await api.client.upload(file, file.name)
-      const joined = data.pages.join('\n').slice(0, 50000)
+      const joined = pagesToClauses(data.pages).join('\n').slice(0, 50000)
       api.patch({ pendingUpload: data, fileText: joined })
       api.notify(`已解析 ${data.pages.length} 页，正在生成猜你想问…`)
       try {

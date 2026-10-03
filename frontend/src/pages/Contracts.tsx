@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../state'
+import { pagesToClauses } from '../lib/pages'
 import type { ContractSummary, ContractVersion } from '../api/client'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
@@ -13,23 +14,6 @@ interface ContractsProps {
   onOpenContract?: (version: ContractVersion, name: string) => void
 }
 
-// 合理解析后端返回的 pages 数组（可能是字符串或 {text}/{quote} 对象）
-function pagesToClauses(pages: unknown[]): string[] {
-  const out: string[] = []
-  for (const p of pages) {
-    let text = ''
-    if (typeof p === 'string') text = p
-    else if (p && typeof p === 'object' && 'text' in p && typeof (p as { text: unknown }).text === 'string')
-      text = (p as { text: string }).text
-    else if (p && typeof p === 'object' && 'quote' in p && typeof (p as { quote: unknown }).quote === 'string')
-      text = (p as { quote: string }).quote
-    for (const line of text.trim().split(/\n+/)) {
-      const t = line.trim()
-      if (t) out.push(t)
-    }
-  }
-  return out
-}
 
 export default function Contracts({ onOpenContract }: ContractsProps) {
   const { state, api } = useApp()

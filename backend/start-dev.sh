@@ -33,5 +33,5 @@ export CONTRACT_READER_LLM_FALLBACK_MODEL="${CONTRACT_READER_LLM_FALLBACK_MODEL:
 export CONTRACT_READER_LLM_FALLBACK_API_KEY="${CONTRACT_READER_LLM_FALLBACK_API_KEY:-${ZAI_API_KEY:-}}"
 
 cd "$BACKEND_DIR"
-export CONTRACT_READER_CORS_ORIGINS="http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,http://localhost:8080,http://127.0.0.1:8080,https://alghaporthos.github.io"
+export CONTRACT_READER_CORS_ORIGINS="${CONTRACT_READER_CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,http://localhost:8080,http://127.0.0.1:8080,https://alghaporthos.github.io}"
 exec .venv/bin/python serve.py

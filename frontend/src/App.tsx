@@ -9,6 +9,7 @@ import {
 } from './state'
 import type { AppApi, AppState, BackendState, ContractDoc, Page } from './state'
 import { examples } from './lib/examples'
+import { pagesToClauses } from './lib/pages'
 import type { ExampleKey } from './lib/examples'
 import { Button } from './components/ui/button'
 import Home from './pages/Home'
@@ -49,21 +50,6 @@ const ANALYSIS_RESET: Partial<AppState> = {
   analysisTab: 'analysis',
 }
 
-// app.js backendPagesToClauses：页可能是 { text } / { quote } 对象，按行拆分条款
-function pagesToClauses(pages: readonly unknown[]): string[] {
-  const clauses: string[] = []
-  for (const page of pages) {
-    let text = ''
-    if (typeof page === 'string') text = page
-    else if (page && typeof page === 'object' && 'text' in page && typeof page.text === 'string') text = page.text
-    else if (page && typeof page === 'object' && 'quote' in page && typeof page.quote === 'string') text = page.quote
-    for (const line of text.trim().split(/\n+/)) {
-      const trimmed = line.trim()
-      if (trimmed) clauses.push(trimmed)
-    }
-  }
-  return clauses
-}
 
 // app.js applyBackendUpload：上传 / 网页抓取 / 打开历史合同共用的文档落地
 function uploadToDoc(

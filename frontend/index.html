@@ -10,11 +10,22 @@
   <body>
     <div id="root"></div>
     <script>
-      // 本地访问自动启用后端；部署到其他域名时覆盖 baseUrl 为空字符串以启用纯本地模式。
-      window.YUEDING_BACKEND_CONFIG = Object.assign({
-        baseUrl: /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://127.0.0.1:8000' : '',
-        timeout: 60000
-      }, window.YUEDING_BACKEND_CONFIG || {})
+      // 后端地址解析（优先级从高到低）：
+      //   1. ?backend=https://… 查询参数 —— 公网演示（如 CF Tunnel）时直接在 URL 里指定后端
+      //   2. window.YUEDING_BACKEND_CONFIG.baseUrl —— 部署时在 HTML 里预写
+      //   3. localhost/127.0.0.1 自动指向 http://127.0.0.1:8000
+      //   4. 其他域名默认 ''（纯本地模式，不发任何请求）
+      (function () {
+        var qs = new URLSearchParams(location.search)
+        var fromQuery = qs.get('backend')
+        var isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+        var preset = window.YUEDING_BACKEND_CONFIG || {}
+        window.YUEDING_BACKEND_CONFIG = Object.assign(
+          { baseUrl: isLocal ? 'http://127.0.0.1:8000' : '', timeout: 60000 },
+          preset,
+          fromQuery ? { baseUrl: fromQuery.replace(/\/$/, '') } : {}
+        )
+      })()
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
