@@ -199,13 +199,54 @@ export default function Home({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1360px] space-y-10 px-5 py-8">
-      <section className="space-y-3 pt-2 text-center">
-        <div className="text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase">
-          EVERY AGREEMENT MATTERS
-        </div>
-        <h1 className="text-[clamp(2rem,5vw,3.5rem)] font-semibold tracking-tight">读懂约定，再做决定</h1>
+    <div className="mx-auto w-full max-w-[1360px] 2xl:max-w-[2040px] space-y-10 px-5 py-8">
+      <section className="space-y-2 pt-2 text-center">
+        <h1 className="text-[clamp(1.5rem,3.5vw,2.25rem)] font-semibold tracking-tight">读懂约定，再做决定</h1>
         <p className="text-muted-foreground">上传合同或协议，找到与你有关的答案</p>
+      </section>
+
+      <section className="space-y-4">
+        <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">没有合同？试试示例</p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {exampleKeys.map((key) => {
+            const sample = examples[key]
+            const meta = exampleMeta[key]
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onChooseSample(key)}
+                className="motion-card group relative flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all duration-150 hover:border-foreground/15 hover:shadow-sm"
+              >
+                <span
+                  aria-hidden
+                  className="absolute inset-y-0 left-0 w-[3px] rounded-l-xl opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                  style={{ background: meta.tone }}
+                />
+                <span
+                  aria-hidden
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
+                  style={{ backgroundColor: `${meta.tone}18`, color: meta.tone }}
+                >
+                  {meta.icon}
+                </span>
+                <span className="min-w-0 flex-1 space-y-1">
+                  <span
+                    className="inline-block rounded-full border px-1.5 py-0 text-[10px] font-medium leading-5 tracking-wide"
+                    style={{ color: meta.tone, borderColor: `${meta.tone}55` }}
+                  >
+                    {meta.tag}
+                  </span>
+                  <strong className="block text-[13px] font-semibold leading-snug">{sample.title}</strong>
+                  <small className="block text-[11px] leading-relaxed text-muted-foreground">
+                    {meta.points.join(' · ')}
+                  </small>
+                </span>
+                <span aria-hidden className="mt-0.5 text-xs text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground/60">→</span>
+              </button>
+            )
+          })}
+        </div>
       </section>
 
       <Card className="gap-4 rounded-2xl p-5 shadow-none">
@@ -355,50 +396,6 @@ export default function Home({
           </p>
         )}
       </Card>
-
-      <section className="space-y-4">
-        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">没有合同？试试示例</p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {exampleKeys.map((key) => {
-            const sample = examples[key]
-            const meta = exampleMeta[key]
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => onChooseSample(key)}
-                className="motion-card group relative flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all duration-150 hover:border-foreground/15 hover:shadow-sm"
-              >
-                <span
-                  aria-hidden
-                  className="absolute inset-y-0 left-0 w-[3px] rounded-l-xl opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-                  style={{ background: meta.tone }}
-                />
-                <span
-                  aria-hidden
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
-                  style={{ backgroundColor: `${meta.tone}18`, color: meta.tone }}
-                >
-                  {meta.icon}
-                </span>
-                <span className="min-w-0 flex-1 space-y-1">
-                  <span
-                    className="inline-block rounded-full border px-1.5 py-0 text-[10px] font-medium leading-5 tracking-wide"
-                    style={{ color: meta.tone, borderColor: `${meta.tone}55` }}
-                  >
-                    {meta.tag}
-                  </span>
-                  <strong className="block text-[13px] font-semibold leading-snug">{sample.title}</strong>
-                  <small className="block text-[11px] leading-relaxed text-muted-foreground">
-                    {meta.points.join(' · ')}
-                  </small>
-                </span>
-                <span aria-hidden className="mt-0.5 text-xs text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground/60">→</span>
-              </button>
-            )
-          })}
-        </div>
-      </section>
 
       <p className="text-center text-xs text-muted-foreground">
         ◇　{api.client.enabled() ? '内容将发送到已配置的合同分析后端' : '输入仅在当前页面内处理'} · 示例内容为虚构材料
