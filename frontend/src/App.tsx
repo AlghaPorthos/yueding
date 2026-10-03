@@ -16,6 +16,7 @@ import { Button } from './components/ui/button'
 import BrandMark from './components/BrandMark'
 import Home from './pages/Home'
 import Analysis from './pages/Analysis'
+import { answerFor } from './pages/Analysis'
 import Workshop from './pages/Workshop'
 import Contracts from './pages/Contracts'
 import Templates from './pages/Templates'
@@ -212,7 +213,23 @@ export default function App() {
       focusTypes: questionFocusTypes(question),
       suggestedQuestions: suggestions.map((q) => ({ question: q })),
       drafts: EMPTY_DRAFTS,
-      history: prev.history.some((x) => x.name === sample.name) ? prev.history : [...prev.history, doc],
+      history: prev.history.some((x) => x.doc.name === sample.name)
+        ? prev.history
+        : [
+            ...prev.history,
+            {
+              doc,
+              question,
+              goal: sample.goal,
+              sample: key,
+              answer: null,
+              answerQuestion: '',
+              findings: null,
+              focusTypes: questionFocusTypes(question),
+              suggestedQuestions: suggestions.map((q) => ({ question: q })),
+              screen: null,
+            },
+          ],
     }))
     window.scrollTo(0, 0)
   }, [])
@@ -283,9 +300,9 @@ export default function App() {
         setState((prev) => ({ ...prev, demoAnalyzing: true }))
         notify('正在生成答案…')
       })
-      // 7. 答案生成完毕，停留阅读
+      // 7. 答案生成完毕，停留阅读（写入 state.answer，供历史条目存储、重开免重复分析）
       at(7900, () => {
-        setState((prev) => ({ ...prev, demoAnalyzing: false }))
+        setState((prev) => ({ ...prev, demoAnalyzing: false, answer: answerFor(question, sample.clauses, true) }))
       })
       // 8. 停留后切入「智读」界面：义务清单 / 术语表 / 交叉引用的整理加载
       at(10600, () => {
@@ -349,7 +366,21 @@ export default function App() {
         selected: 0,
         goal: question || '我希望确认这份合同中尚未明确的安排',
         ...ANALYSIS_RESET,
-        history: [...prev.history, doc],
+        history: [
+          ...prev.history,
+          {
+            doc,
+            question,
+            goal: question || '我希望确认这份合同中尚未明确的安排',
+            sample: null,
+            answer: null,
+            answerQuestion: '',
+            findings: null,
+            focusTypes: questionFocusTypes(question),
+            suggestedQuestions: [],
+            screen: null,
+          },
+        ],
       }))
       window.scrollTo(0, 0)
       if (!backendClient.enabled()) return
@@ -366,7 +397,7 @@ export default function App() {
             backend: loaded.backend,
             doc: loaded.doc,
             selected: loaded.selected,
-            history: prev.history.map((x, i) => (i === prev.history.length - 1 ? loaded.doc : x)),
+            history: prev.history.map((x, i) => (i === prev.history.length - 1 ? { ...x, doc: loaded.doc } : x)),
           }))
           notify('合同已上传，准备分析')
         } catch {
@@ -390,7 +421,21 @@ export default function App() {
       backend: loaded.backend,
       doc: loaded.doc,
       selected: loaded.selected,
-      history: [...prev.history, loaded.doc],
+      history: [
+        ...prev.history,
+        {
+          doc: loaded.doc,
+          question,
+          goal: question || '我希望确认这份合同中尚未明确的安排',
+          sample: null,
+          answer: null,
+          answerQuestion: '',
+          findings: null,
+          focusTypes: questionFocusTypes(question),
+          suggestedQuestions: [],
+          screen: null,
+        },
+      ],
     }))
     window.scrollTo(0, 0)
   }, [])
@@ -418,7 +463,21 @@ export default function App() {
         backend: EMPTY_BACKEND,
         doc: placeholder,
         selected: -1,
-        history: [...prev.history, placeholder],
+        history: [
+          ...prev.history,
+          {
+            doc: placeholder,
+            question,
+            goal: question || '我希望确认这份合同中尚未明确的安排',
+            sample: null,
+            answer: null,
+            answerQuestion: '',
+            findings: null,
+            focusTypes: questionFocusTypes(question),
+            suggestedQuestions: [],
+            screen: null,
+          },
+        ],
       }))
       window.scrollTo(0, 0)
       if (!backendClient.enabled()) {
@@ -433,7 +492,7 @@ export default function App() {
             backend: loaded.backend,
             doc: loaded.doc,
             selected: loaded.selected,
-            history: prev.history.map((x, i) => (i === prev.history.length - 1 ? loaded.doc : x)),
+            history: prev.history.map((x, i) => (i === prev.history.length - 1 ? { ...x, doc: loaded.doc } : x)),
           }))
         } catch {
           notify('网页抓取失败，请检查链接或稍后重试')
@@ -442,6 +501,54 @@ export default function App() {
     },
     [notify],
   )
+
+  // 把当前会话的分析结果同步进历史末位条目，「我的合同」重开时直接还原、不重复分析。
+  // 引用相等守护：同步写入后再次触发时各项引用一致，直接返回原状态避免循环。
+  useEffect(() => {
+    setState((prev) => {
+      if (!prev.doc || !prev.history.length) return prev
+      const last = prev.history[prev.history.length - 1]
+      if (last.doc.name !== prev.doc.name) return prev
+      if (
+        last.question === prev.question &&
+        last.goal === prev.goal &&
+        last.sample === prev.sample &&
+        last.answer === prev.answer &&
+        last.answerQuestion === prev.answerQuestion &&
+        last.findings === prev.findings &&
+        last.focusTypes === prev.focusTypes &&
+        last.suggestedQuestions === prev.suggestedQuestions &&
+        last.screen === prev.screen
+      ) {
+        return prev
+      }
+      const history = prev.history.slice()
+      history[history.length - 1] = {
+        ...last,
+        question: prev.question,
+        goal: prev.goal,
+        sample: prev.sample,
+        answer: prev.answer,
+        answerQuestion: prev.answerQuestion,
+        findings: prev.findings,
+        focusTypes: prev.focusTypes,
+        suggestedQuestions: prev.suggestedQuestions,
+        screen: prev.screen,
+      }
+      return { ...prev, history }
+    })
+  }, [
+    state.doc,
+    state.question,
+    state.goal,
+    state.sample,
+    state.answer,
+    state.answerQuestion,
+    state.findings,
+    state.focusTypes,
+    state.suggestedQuestions,
+    state.screen,
+  ])
 
   const contextValue = useMemo(() => ({ state, api }), [state, api])
 

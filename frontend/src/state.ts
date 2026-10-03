@@ -38,6 +38,20 @@ export interface AnswerState {
   model?: string
 }
 
+// 「我的合同」历史条目：文档 + 已生成的分析快照，重开时直接还原、不重复分析
+export interface HistoryEntry {
+  doc: ContractDoc
+  question: string
+  goal: string
+  sample: string | null
+  answer: AnswerState | null
+  answerQuestion: string
+  findings: Finding[] | null
+  focusTypes: string[]
+  suggestedQuestions: Array<{ question: string }>
+  screen: ScreenResult | null
+}
+
 export interface BackendState {
   contractId: string | null
   versionId: string | null
@@ -87,7 +101,7 @@ export interface AppState {
   legalScope: string
   kbShowAll: boolean
    backend: BackendState
-   history: ContractDoc[]
+   history: HistoryEntry[]
    drafts: DraftState
    // 模板库演示回放：demoRunning 盖住整页交互；demoAnalyzing 是分析页加载阶段，demoDeep 区分深度解读文案
    demoRunning: boolean

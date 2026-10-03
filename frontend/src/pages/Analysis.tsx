@@ -168,7 +168,7 @@ const SAMPLE_LEGAL_REFS: Record<string, string[]> = {
   ],
 }
 
-function answerFor(q: string, clauses: string[], isSample: boolean): AnswerState {
+export function answerFor(q: string, clauses: string[], isSample: boolean): AnswerState {
   const topic = backendTopicForQuestion(q)
   const i = topic ? clauseIndex(topic, clauses) : -1
   if (i < 0)
